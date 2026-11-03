@@ -57,7 +57,7 @@ const ACT = {
   cal(b) { const d = UI.st.calMonth ? new Date(UI.st.calMonth) : new Date(); d.setDate(1); d.setMonth(d.getMonth() + +b.dataset.v); UI.st.calMonth = +d; UI.render(); },
   'auto-week'() { autoWeek(); save(); UI.st.plansTab = 'week'; if (location.hash !== '#plans') location.hash = 'plans'; else UI.render(); UI.toast('وُزّعت الخطط على الأسبوع'); },
   // live
-  'lw-next'() { Live.next(); }, 'lw-skip'() { Live.next(true); }, 'lw-prev'() { Live.prev(); },
+  'lw-next'() { Live.next(); }, 'lw-skip'() { Live.skip(); }, 'lw-prev'() { Live.prev(); },
   'lw-pause'() { Live.pause(); }, 'lw-resume'() { Live.resume(); }, 'lw-extend'() { Live.extend(15); },
   'lw-done'() { Live.next(); },
   'lw-rep'(b) { const c = Live.cur; c.reps_done = Math.max(0, (c.reps_done ?? c.target) + +b.dataset.v); $('#lw-reps').textContent = c.reps_done; save(); },

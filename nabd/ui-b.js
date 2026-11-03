@@ -90,7 +90,7 @@ UI.livePanel = function () {
     ${firstTime && c.ph === 'main' && c.set === 1 ? `<details class="learn" open><summary>أول مرة تؤدي هذا التمرين؟</summary><ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><p class="small"><b>تجنّب:</b> ${esc(t.mis[0])}</p></details>` : `<p class="small cue">${esc(t.steps[1] || t.steps[0])}</p>`}
     <div class="lw-btns">${c.kind === 'reps' ? `<button class="btn primary big" data-act="lw-done">✓ أنهيت المجموعة</button>` : `<button class="btn primary big" data-act="lw-next">التالي</button>`}<button class="btn sm ghost" data-act="lw-swap">${ic('swap')} بديل</button></div>`;
   }
-  el.innerHTML = `${main}<div class="lw-ctrl"><button class="btn" data-act="lw-prev">${ic('next')} السابق</button><button class="btn" data-act="${paused ? 'lw-resume' : 'lw-pause'}">${paused ? ic('play') + ' استئناف' : ic('pause') + ' إيقاف مؤقت'}</button><button class="btn" data-act="lw-skip">تخطٍّ ${ic('prev')}</button></div>${paused ? '<p class="paused">متوقف مؤقتًا</p>' : ''}${(L.sess.notes || []).length && L.i < 3 ? `<p class="note">${L.sess.notes.map(esc).join('<br>')}</p>` : ''}`;
+  el.innerHTML = `${main}<div class="lw-ctrl"><button class="btn" data-act="lw-prev">${ic('next')} السابق</button><button class="btn" data-act="${paused ? 'lw-resume' : 'lw-pause'}">${paused ? ic('play') + ' استئناف' : ic('pause') + ' إيقاف مؤقت'}</button><button class="btn" data-act="lw-skip">تخطّي التمرين ${ic('prev')}</button></div>${paused ? '<p class="paused">متوقف مؤقتًا</p>' : ''}${(L.sess.notes || []).length && L.i < 3 ? `<p class="note">${L.sess.notes.map(esc).join('<br>')}</p>` : ''}`;
   this.liveTick();
 };
 UI.liveTick = function () {

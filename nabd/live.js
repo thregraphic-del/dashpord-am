@@ -48,6 +48,13 @@ const Live = {
     save(); this.announce(); UI.livePanel();
   },
   next(skip) { this.go(S.live.i + 1, {skip}); },
+  skip() { // jump to the next different exercise, skipping its remaining sets and rests
+    const L = S.live, c = this.cur, id = c && c.kind !== 'rest' ? c.id : null;
+    let k = L.i + 1;
+    while (k < L.steps.length && (L.steps[k].kind === 'rest' || (id && L.steps[k].id === id))) k++;
+    if (k >= L.steps.length) { this.logCurrent(true); return this.finish(); }
+    this.go(k, {skip:true}); UI.toast('انتقلت إلى: ' + EXI[L.steps[k].id].ar);
+  },
   prev() { const L = S.live; let k = L.i - 1; while (k > 0 && L.steps[k].kind === 'rest') k--; this.go(k, {noLog:true}); },
   pause() { const L = S.live; if (L.pausedAt) return; L.pausedAt = Date.now(); save(); Sound.speak('إيقاف مؤقت'); UI.livePanel(); },
   resume() { const L = S.live; if (!L.pausedAt) return; const d = Date.now() - L.pausedAt; L.pausedTotal += d; L.stepPaused += d; L.pausedAt = null; save(); this.lockWake(); UI.livePanel(); },
