@@ -66,7 +66,7 @@ function genSession(focus, minutes, place, seed = 1) {
     for (let i = 0; i < n; i++) pick.push(p[i % p.length]);
     return {name:'حركة ومرونة · ' + minutes + ' دقيقة', focus, warm:[], main:pick.map(e => ({id:e.id, sets:1, reps:null, t:e.t || 30, rest:10, weight:0})), cool:[]};
   }
-  const warm = WARM[focus] || WARM.full, cool = COOL[focus] || COOL.full;
+  const warm = warmFor(focus), cool = coolFor(focus);
   const nW = minutes <= 15 ? 2 : minutes <= 30 ? 3 : 4, nC = minutes <= 15 ? 2 : 3;
   const mainSec = Math.max(5, minutes - nW * .9 - nC * .7 - .5) * 60;
   const sets = lvl === 1 ? 3 : minutes >= 45 ? 4 : 3;
@@ -85,7 +85,7 @@ function genSession(focus, minutes, place, seed = 1) {
   }
   const hasCore = chosen.some(c => ['abs','obliques'].includes(EXI[c.id].prim[0]));
   if (minutes >= 30 && !hasCore && focus !== 'upper') { const p = EXI.plank; chosen.push({id:'plank', sets:2, reps:null, t:30, rest:45, weight:0}); }
-  return {name:f.ar + ' · ' + minutes + ' دقيقة', focus, warm:warm.slice(0, nW).filter(id => available(EXI[id], eqList) || EXI[id].eq.includes('bw')).map(id => ({id, t:id === 'march' ? 45 : 35})), main:chosen, cool:cool.slice(0, nC).map(id => ({id, t:30}))};
+  return {name:f.ar + ' · ' + minutes + ' دقيقة', focus, style:'sets', warm:warm.slice(0, nW).filter(id => available(EXI[id], eqList) || EXI[id].eq.includes('bw')).map(id => ({id, t:id === 'march' ? 45 : 35})), main:chosen, cool:cool.slice(0, nC).map(id => ({id, t:30}))};
 }
 const workSec = it => it.t ? it.t : repTop(it.reps) * 3.5 + 5;
 const estItem = it => it.sets * (workSec(it) + it.rest) - it.rest + 15;
@@ -196,4 +196,47 @@ function demoData() {
     out.push({id:uid(), date:date.toISOString(), name:'تمرين تجريبي', dur:1800 + Math.round(Math.random() * 900), sets, rating:'ok', demo:true});
   }
   return out;
+}
+
+// ---------- focus groups + "one exercise per minute" circuit sessions ----------
+Object.assign(FOCUS, {
+  chest:{ar:'الصدر', m:['chest_lower','chest_upper','chest_lower','chest_upper','triceps']},
+  back:{ar:'الظهر', m:['lats','upper_back','lats','lower_back','traps']},
+  shoulders:{ar:'الأكتاف', m:['delt_front','delt_side','delt_rear','delt_side']},
+  arms:{ar:'الذراعان', m:['biceps','triceps','biceps','triceps','forearms']},
+  cardio:{ar:'كارديو', m:[]}
+});
+const FOCUS_ORDER = ['legs','glutes','full','chest','back','shoulders','arms','core','upper','push','pull','cardio','mobility'];
+const FOCUS_CATS = {legs:['legs','glutes'], glutes:['glutes'], chest:['chest'], back:['back'], shoulders:['shoulders'], arms:['arms'], core:['abs'], upper:['chest','back','shoulders','arms'], full:['chest','back','legs','glutes','shoulders','abs','cardio'], cardio:['cardio'], mobility:['mob'],
+  push:{m:['chest_upper','chest_lower','delt_front','delt_side','triceps']}, pull:{m:['lats','upper_back','delt_rear','biceps','traps']}};
+const warmFor = f => WARM[f] || (['legs','glutes'].includes(f) ? WARM.legs : ['chest','back','shoulders','arms','upper','push','pull'].includes(f) ? WARM.upper : WARM.full);
+const coolFor = f => COOL[f] || (['legs','glutes'].includes(f) ? COOL.legs : ['chest','back','shoulders','arms','upper','push','pull'].includes(f) ? COOL.upper : COOL.full);
+function focusPool(focus, place) {
+  const eqList = place === 'gym' ? null : (S.profile && S.profile.place === 'home' ? userEq() : ['bw', 'db', 'band', 'bench', 'kb', 'rope']);
+  const fc = FOCUS_CATS[focus] || FOCUS_CATS.full, lvl = userLvl();
+  return EX.filter(e => {
+    if (Array.isArray(fc)) { if (!fc.includes(exCat(e))) return false; } else if (!fc.m.includes(e.prim[0]) || e.kind !== 's') return false;
+    if (focus !== 'mobility' && (e.kind === 'm' || e.kind === 'x')) return false;
+    return available(e, eqList) && !limited(e) && e.lvl <= Math.max(2, lvl + 1) && !(e.t && e.t > 120);
+  });
+}
+function circuitItem(id) { const e = EXI[id]; return {id, sets:1, reps:null, t:e.kind === 'x' || e.kind === 'm' ? Math.min(e.t || 40, 45) : 45, rest:15, weight:lastWeight(id)}; }
+function genCircuit(focus, minutes, place, seed) {
+  const R = rng(seed * 31 + minutes + focus.length * 7), pool = focusPool(focus, place);
+  const nW = focus === 'mobility' ? 0 : minutes <= 15 ? 2 : 3, nC = focus === 'mobility' ? 0 : minutes <= 15 ? 2 : 3;
+  const n = Math.max(4, Math.round(minutes - nW * .8 - nC * .7));
+  const byM = {}; pool.forEach(e => { (byM[e.prim[0]] = byM[e.prim[0]] || []).push(e); });
+  Object.values(byM).forEach(l => l.sort((a, b) => (b.key - a.key) + (R() - .5) * 1.6));
+  const keys = Object.keys(byM).sort(() => R() - .5), picked = [];
+  for (let i = 0; picked.length < n && i < 400; i++) { const l = byM[keys[i % keys.length]]; if (l && l.length) picked.push(l.shift()); }
+  return {name:FOCUS[focus].ar + ' · ' + minutes + ' دقيقة · تمرين كل دقيقة', focus, style:'circuit', warm:warmFor(focus).slice(0, nW).map(id => ({id, t:35})), main:picked.map(e => circuitItem(e.id)), cool:coolFor(focus).slice(0, nC).map(id => ({id, t:30}))};
+}
+function buildQuick(q) {
+  const place = q.place || (S.profile && S.profile.place) || 'home';
+  const s = q.style === 'sets' && FOCUS[q.focus].m.length ? genSession(q.focus, q.min, place, S.seed) : genCircuit(q.focus, q.min, place, S.seed);
+  if (q.picked) {
+    const old = Object.fromEntries(s.main.map(m => [m.id, m]));
+    s.main = q.picked.filter(id => EXI[id]).map(id => old[id] || (q.style === 'sets' ? {id, sets:EXI[id].sets, reps:EXI[id].reps, t:EXI[id].t, rest:EXI[id].rest, weight:lastWeight(id)} : circuitItem(id)));
+  }
+  return s;
 }

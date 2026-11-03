@@ -20,7 +20,7 @@ const lvlDots = l => `<span class="lvl" title="${LVL[l]}">${[1,2,3].map(i => `<i
 const chipsM = (ids, cls) => ids.map(m => `<button class="mchip ${cls}" data-act="muscle" data-id="${m}">${esc(MUSCLES[m].ar)}</button>`).join('');
 
 const UI = {
-  st:{lib:{q:'', cat:'', lvl:'', eq:[], place:'', kind:'', mech:'', impact:'', tab:'all', sort:'fit', adv:false}, body:{sel:null, rec:false, rot:true}, quick:{focus:'legs', min:30, place:null}, plansTab:'mine', edit:null, progEx:null, chat:[], confirm:null, detail:{fault:false, speed:1}, calMonth:null},
+  st:{lib:{q:'', cat:'', lvl:'', eq:[], place:'', kind:'', mech:'', impact:'', tab:'all', sort:'fit', adv:false}, body:{sel:null, rec:false, rot:true}, quick:{focus:'legs', min:30, place:null, style:'circuit', picked:null}, pool:false, plansTab:'mine', edit:null, progEx:null, chat:[], confirm:null, detail:{fault:false, speed:1}, calMonth:null},
   route() { const h = (location.hash || '').slice(1); if (h.startsWith('ex-')) return {v:'ex', id:h.slice(3)}; return {v:h || (S.profile ? 'home' : 'welcome')}; },
   render() {
     const r = this.route(), V = this.views[r.v] ? r.v : 'home';
@@ -31,6 +31,7 @@ const UI = {
     $$('.tabbar a, .dnav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + V || (V === 'ex' && a.getAttribute('href') === '#library')));
     $('#sheet').hidden = true;
     if (this.after[V]) this.after[V].call(this, r);
+    Thumbs.scan($('#main'));
     window.scrollTo(0, 0);
     this.musicChanged();
   },
@@ -54,7 +55,7 @@ const UI = {
 // ---------- HOME ----------
 UI.views.home = function () {
   const q = this.st.quick; q.place = q.place || (S.profile && S.profile.place) || 'home';
-  const sess = genSession(q.focus, q.min, q.place, S.seed), est = Math.round(estSession(sess) / 60);
+  const sess = buildQuick(q), est = Math.round(estSession(sess) / 60);
   const wk = S.history.filter(h => inWeek(h)), T = totals(wk), goal = (S.profile && S.profile.days) || 3;
   const today = new Date().getDay(), plan = S.week[today] && findPlan(S.week[today]);
   const rec = recoveryMap(), ready = [], tired = [];
@@ -67,18 +68,20 @@ UI.views.home = function () {
     <div><p class="eyebrow">${greet}${S.profile && S.profile.name ? '، ' + esc(S.profile.name) : ''} · ${DAYS[today]}</p><h1>ماذا ستدرّب اليوم؟</h1></div>
   </section>
   <section class="quick card">
-    <div class="quick-head"><h2>تمرين سريع موجّه</h2><span class="muted">من الإحماء حتى التهدئة، ويُسجَّل تلقائيًا</span></div>
-    <div class="field"><label>التركيز</label><div class="chips">${Object.entries(FOCUS).map(([k, f]) => `<button class="chip" aria-pressed="${q.focus === k}" data-act="q" data-k="focus" data-v="${k}">${f.ar}</button>`).join('')}</div></div>
+    <div class="quick-head"><h2>تمرين موجّه</h2><span class="muted">من الإحماء حتى التهدئة، ويُسجَّل تلقائيًا</span></div>
+    <div class="field"><label>التركيز</label><div class="chips">${FOCUS_ORDER.map(k => `<button class="chip" aria-pressed="${q.focus === k}" data-act="q" data-k="focus" data-v="${k}">${FOCUS[k].ar}</button>`).join('')}</div></div>
     <div class="row2">
-      <div class="field"><label>المدة</label><div class="chips">${[15, 30, 45, 60].map(m => `<button class="chip" aria-pressed="${q.min === m}" data-act="q" data-k="min" data-v="${m}">${m} د</button>`).join('')}</div></div>
+      <div class="field"><label>المدة</label><div class="chips">${[15, 20, 30, 45, 60].map(m => `<button class="chip" aria-pressed="${q.min === m}" data-act="q" data-k="min" data-v="${m}">${m} د</button>`).join('')}</div></div>
       <div class="field"><label>المكان</label><div class="chips">${[['home','البيت'],['gym','النادي']].map(([k, t]) => `<button class="chip" aria-pressed="${q.place === k}" data-act="q" data-k="place" data-v="${k}">${t}</button>`).join('')}</div></div>
     </div>
-    <ol class="preview">
-      ${sess.warm.length ? `<li class="ph"><span class="tag warm">إحماء</span>${sess.warm.map(w => esc(EXI[w.id].ar)).join(' · ')}</li>` : ''}
-      ${sess.main.map(m => { const e = EXI[m.id]; return `<li><a href="#ex-${e.id}">${esc(e.ar)}</a><span class="muted">${m.sets} × ${m.t ? m.t + ' ث' : esc(m.reps)}</span></li>`; }).join('')}
-      ${sess.cool.length ? `<li class="ph"><span class="tag cool">تهدئة</span>${sess.cool.map(w => esc(EXI[w.id].ar)).join(' · ')}</li>` : ''}
-    </ol>
-    <div class="quick-foot"><span class="est">≈ ${est} دقيقة · ${sess.main.length} تمارين</span><button class="btn ghost" data-act="reshuffle">${ic('swap')} تشكيلة أخرى</button><button class="btn primary big" data-act="start-quick">${ic('play')} ابدأ التمرين</button></div>
+    <div class="field"><label>نمط الجلسة</label><div class="seg">${[['circuit','تمرين كل دقيقة (45 ث عمل + 15 ث انتقال)'],['sets','مجموعات وتكرارات']].map(([k, t]) => `<button aria-pressed="${q.style === k}" data-act="q" data-k="style" data-v="${k}">${t}</button>`).join('')}</div></div>
+    <div class="qhead"><b>تمارين الجلسة (${sess.main.length})</b><span class="muted small">مرّر للأسفل وألغِ أي تمرين لا تريده</span></div>
+    ${sess.warm.length ? `<p class="phrow"><span class="tag warm">إحماء</span>${sess.warm.map(w => esc(EXI[w.id].ar)).join(' · ')}</p>` : ''}
+    <ol class="pick-list">${sess.main.map((m, i) => this.pickRow(EXI[m.id], i + 1, m, true)).join('')}</ol>
+    ${sess.cool.length ? `<p class="phrow"><span class="tag cool">تهدئة</span>${sess.cool.map(w => esc(EXI[w.id].ar)).join(' · ')}</p>` : ''}
+    <button class="btn" data-act="pool-toggle">${ic('plus')} ${this.st.pool ? 'إخفاء قائمة التمارين' : `أضف تمارين من كل تمارين ${FOCUS[q.focus].ar} (${focusPool(q.focus, q.place).length})`}</button>
+    ${this.st.pool ? `<ol class="pick-list pool">${focusPool(q.focus, q.place).filter(e => !sess.main.some(m => m.id === e.id)).map(e => this.pickRow(e, null, null, false)).join('')}</ol>` : ''}
+    <div class="quick-foot sticky"><span class="est">≈ ${est} دقيقة · ${sess.main.length} تمرين</span><button class="btn ghost" data-act="reshuffle">${ic('swap')} تشكيلة أخرى</button><button class="btn primary big" data-act="start-quick" ${sess.main.length ? '' : 'disabled'}>${ic('play')} ابدأ التمرين</button></div>
   </section>
   <section class="grid3">
     <div class="card stat"><span class="muted">هذا الأسبوع</span><b class="n">${T.n}<small> / ${goal}</small></b><span>جلسات</span><div class="bar"><i style="width:${Math.min(100, T.n / goal * 100)}%"></i></div></div>
@@ -99,17 +102,16 @@ UI.views.home = function () {
 // ---------- BODY EXPLORER ----------
 UI.views.body = function () {
   const b = this.st.body;
-  return `<section class="page-head"><h1>الجسم التفاعلي</h1><p class="muted">اسحب يمينًا أو يسارًا لتدوير الجسم، واستخدم عجلة الفأرة للتكبير، واضغط على أي عضلة لتعرف تمارينها.</p></section>
+  return `<section class="page-head"><h1>الجسم التفاعلي</h1><p class="muted">اختر زاوية العرض (أمام، خلف، جانب)، واضغط على أي عضلة لتعرف تمارينها.</p></section>
   <div class="explorer">
     <div class="stage-wrap card">
       <div class="stage" id="stage"></div>
       <div class="stage-bar">
         <div class="seg">${[['front','أمام'],['back','خلف'],['right','يمين'],['left','يسار']].map(([k, t]) => `<button data-act="view" data-v="${k}">${t}</button>`).join('')}</div>
         <label class="tog"><input type="checkbox" id="rec-t" data-in="rec" ${b.rec ? 'checked' : ''}> خريطة الاستشفاء</label>
-        <label class="tog"><input type="checkbox" id="rot-t" data-in="rot" ${b.rot ? 'checked' : ''}> تدوير تلقائي</label>
       </div>
       ${b.rec ? `<div class="legend"><span><i class="dot bad"></i>أقل من 24 ساعة</span><span><i class="dot warn"></i>24–48 ساعة</span><span><i class="dot good"></i>جاهزة (+48)</span><span><i class="dot base"></i>لم تُدرَّب مؤخرًا</span></div>` : ''}
-      <p class="note">رسم توضيحي لجسم بشري بنسب حقيقية، يتحرك على هيكل عظمي بمفاصل حقيقية. العضلات الـ19 قابلة للضغط. الجسم الأنثوي مخطط له لاحقًا.</p>
+      <p class="note">رسم توضيحي لجسم بشري بنسب حقيقية، يتحرك على هيكل عظمي بمفاصل حقيقية. العضلات الـ19 قابلة للضغط. نموذج الرجل مخطط له لاحقًا.</p>
     </div>
     <aside class="card mpanel" id="mpanel">${this.musclePanel(b.sel)}</aside>
   </div>
@@ -130,13 +132,13 @@ UI.musclePanel = function (id) {
 };
 UI.after.body = function () {
   const b = this.st.body;
-  Stage.mount($('#stage'), {mode:'explore', autoRot:b.rot, rec:b.rec ? recoveryMap() : null, onPick:id => { if (id) this.selMuscle(id); }});
+  Stage.mount($('#stage'), {mode:'explore', rec:b.rec ? recoveryMap() : null, onPick:id => { if (id) this.selMuscle(id); }});
   Stage.sel = b.sel; if (b.sel) Stage.setHL({prim:[b.sel], sec:[]});
 };
 UI.selMuscle = function (id) {
   this.st.body.sel = id; Stage.sel = id; Stage.setHL({prim:[id], sec:[]});
   const back = ['traps','upper_back','lats','lower_back','glutes','hamstrings','calves','triceps','delt_rear'].includes(id);
-  if (Stage.ok) Stage.view(back ? 'back' : 'front'); Stage.autoRot = false; const rt = $('#rot-t'); if (rt) rt.checked = false; this.st.body.rot = false;
+  if (Stage.ok) Stage.view(back ? 'back' : 'front');
   $('#mpanel').innerHTML = this.musclePanel(id);
   $$('[data-act="sel-muscle"]').forEach(c => c.setAttribute('aria-pressed', c.dataset.id === id));
   if (window.innerWidth < 900) $('#mpanel').scrollIntoView({behavior:'smooth', block:'start'});
@@ -168,9 +170,9 @@ UI.libResults = function () {
   return `<p class="muted small count">${list.length} تمرين</p><div class="exgrid">${list.map(e => this.exCard(e)).join('')}</div>`;
 };
 UI.exCard = function (e) {
-  const fav = S.favs.includes(e.id), lim = limited(e);
-  return `<article class="excard"><a href="#ex-${e.id}" class="exlink"><span class="excat">${CATS[exCat(e)]}</span><h3>${exName(e)}</h3>
-  <p class="mus"><span class="mdot prim"></span>${esc(muscleNames(e.prim))}${e.sec.length ? ` <span class="muted">+ ${esc(muscleNames(e.sec.slice(0, 2)))}</span>` : ''}</p>
+  const fav = S.favs.includes(e.id), lim = limited(e), dose = e.t ? e.t + ' ثانية' : `${e.sets} × ${esc(e.reps)}`;
+  return `<article class="excard"><a href="#ex-${e.id}" class="exlink"><canvas class="thumb" data-ex="${e.id}"></canvas><span class="excat">${CATS[exCat(e)]}</span><h3>${exName(e)}</h3>
+  <p class="pdose">${dose}</p><p class="mus"><span class="mdot prim"></span>${esc(muscleNames(e.prim))}</p>
   <div class="meta">${lvlDots(e.lvl)}<span>${e.eq.map(q => EQ[q]).join(' / ')}</span>${e.hi ? '<span class="pill">عالي الصدمة</span>' : ''}${lim ? `<span class="pill warn">${lim}</span>` : ''}</div></a>
   <button class="fav ${fav ? 'on' : ''}" data-act="fav" data-id="${e.id}" aria-label="${fav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}">${ic('star')}</button></article>`;
 };
@@ -213,7 +215,7 @@ UI.views.ex = function (r) {
     <div class="stage-wrap card">
       <div class="stage tall" id="stage"><div class="phase" id="phase">—</div>${d.fault ? `<div class="fault-tag">✕ أداء خاطئ: <span id="fault-t"></span></div>` : ''}</div>
       <div class="stage-bar">
-        <div class="seg">${[['front','أمام'],['side','جانب'],['back','خلف'],['left','يسار']].map(([k, t]) => `<button data-act="view" data-v="${k}">${t}</button>`).join('')}</div>
+        <div class="seg">${[['front','أمام'],['side','جانب'],['back','خلف']].map(([k, t]) => `<button data-act="view" data-v="${k}">${t}</button>`).join('')}</div>
         <button class="icon-btn" data-act="playpause" id="pp" aria-label="تشغيل أو إيقاف الحركة">${ic('pause')}</button>
         <button class="btn sm ghost" data-act="replay">إعادة</button>
         <div class="seg">${[.25, .5, 1].map(s => `<button aria-pressed="${d.speed === s}" data-act="speed" data-v="${s}">${s === 1 ? 'عادي' : s === .5 ? 'بطيء' : 'بطيء جدًا'}</button>`).join('')}</div>
@@ -250,4 +252,10 @@ UI.after.ex = function (r) {
   Stage.setAnim(e, {fault:d.fault, instant:true});
   const ft = $('#fault-t'); if (ft) ft.textContent = Stage.anim.faultText;
   Stage.onPhase = ph => { const el = $('#phase'); if (el && el.textContent !== ph.name) el.textContent = ph.name; };
+};
+UI.pickRow = function (e, n, it, on) {
+  const dose = it ? (it.t ? it.t + ' ثانية' : `${it.sets} × ${esc(it.reps)}`) : (e.t ? e.t + ' ث' : `${e.sets} × ${esc(e.reps)}`);
+  return `<li class="prow ${on ? 'on' : ''}"><button class="pchk" data-act="pick" data-id="${e.id}" aria-pressed="${on}" aria-label="${on ? 'إزالة' : 'إضافة'} ${esc(e.ar)}">${on ? '✓' : '+'}</button>
+  <a class="pthumb" href="#ex-${e.id}"><canvas class="thumb" data-ex="${e.id}"></canvas>${n ? `<span class="pnum">${n}</span>` : ''}</a>
+  <div class="pinfo"><b>${esc(e.ar)}</b>${S.prefs.en ? `<span class="en">${esc(e.en)}</span>` : ''}<span class="pdose">${dose}</span><span class="muted small"><span class="mdot prim"></span>${esc(muscleNames(e.prim))}</span></div></li>`;
 };

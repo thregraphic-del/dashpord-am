@@ -5,9 +5,11 @@ const ACT = {
   music() { Sound.toggle(); },
   'm-next'() { Sound.go(1); }, 'm-prev'() { Sound.go(-1); }, 'm-pick'(b) { Sound.pick(+b.dataset.v); },
   'test-voice'() { Sound.speak('مرحبًا، أنا مدربك. لنبدأ التمرين.'); Sound.beep(880); },
-  q(b) { const k = b.dataset.k; UI.st.quick[k] = k === 'min' ? +b.dataset.v : b.dataset.v; UI.render(); },
-  reshuffle() { S.seed++; save(); UI.render(); },
-  'start-quick'() { const q = UI.st.quick; Live.start(genSession(q.focus, q.min, q.place || (S.profile && S.profile.place) || 'home', S.seed)); },
+  q(b) { const k = b.dataset.k; UI.st.quick[k] = k === 'min' ? +b.dataset.v : b.dataset.v; UI.st.quick.picked = null; UI.st.pool = false; keepScroll(() => UI.render()); },
+  pick(b) { const q = UI.st.quick; if (!q.picked) q.picked = buildQuick({...q, picked:null}).main.map(m => m.id); const id = b.dataset.id, i = q.picked.indexOf(id); i < 0 ? q.picked.push(id) : q.picked.splice(i, 1); keepScroll(() => UI.render()); UI.toast(i < 0 ? 'أُضيف ' + EXI[id].ar : 'أُزيل ' + EXI[id].ar); },
+  'pool-toggle'() { UI.st.pool = !UI.st.pool; keepScroll(() => UI.render()); },
+  reshuffle() { S.seed++; UI.st.quick.picked = null; save(); keepScroll(() => UI.render()); },
+  'start-quick'() { const s = buildQuick(UI.st.quick); if (!s.main.length) return UI.toast('اختر تمرينًا واحدًا على الأقل'); Live.start(s); },
   'start-plan'(b) { const p = findPlan(b.dataset.id); if (p) Live.start(planToSession(p)); },
   'start-routine'(b) { const r = ROUTINES.find(x => x.id === b.dataset.id); Live.start({name:r.name, warm:[], main:r.items.map(id => ({id, sets:1, t:EXI[id].t || 30, reps:null, rest:8, weight:0})), cool:[]}); },
   try(b) { const e = EXI[b.dataset.id]; Live.start({name:e.ar, warm:[], main:[{id:e.id, sets:e.sets, reps:e.reps, t:e.t, rest:e.rest, weight:lastWeight(e.id)}], cool:[]}); },
@@ -17,7 +19,7 @@ const ACT = {
   'sel-muscle-go'(b) { UI.st.body.sel = b.dataset.id; location.hash = 'body'; },
   muscle(b) { UI.st.body.sel = b.dataset.id; location.hash = 'body'; },
   'filter-muscle'(b) { Object.assign(UI.st.lib, {cat:'m:' + b.dataset.id, q:'', tab:'all'}); location.hash = 'library'; },
-  fav(b) { const id = b.dataset.id, i = S.favs.indexOf(id); i < 0 ? S.favs.push(id) : S.favs.splice(i, 1); save(); if (UI.route().v === 'library') $('#lib-res').innerHTML = UI.libResults(); else { UI.render(); } UI.toast(i < 0 ? 'أُضيف للمفضلة' : 'أُزيل من المفضلة'); },
+  fav(b) { const id = b.dataset.id, i = S.favs.indexOf(id); i < 0 ? S.favs.push(id) : S.favs.splice(i, 1); save(); if (UI.route().v === 'library') { $('#lib-res').innerHTML = UI.libResults(); Thumbs.scan($('#lib-res')); } else { UI.render(); } UI.toast(i < 0 ? 'أُضيف للمفضلة' : 'أُزيل من المفضلة'); },
   'lib-tab'(b) { UI.st.lib.tab = b.dataset.v; UI.render(); },
   'lib-cat'(b) { UI.st.lib.cat = b.dataset.v; UI.render(); },
   'lib-adv'() { UI.st.lib.adv = !UI.st.lib.adv; UI.render(); },
@@ -87,6 +89,7 @@ const ACT = {
   'wipe-ask'() { UI.st.confirm = 'wipe'; UI.render(); }, 'confirm-cancel'() { UI.st.confirm = null; UI.render(); },
   wipe() { S = defState(); save(); UI.st.confirm = null; applyTheme(); location.hash = 'welcome'; UI.toast('حُذفت كل البيانات'); }
 };
+function keepScroll(fn) { const y = window.scrollY; fn(); window.scrollTo(0, y); }
 function moveItem(i, d) { const a = UI.st.edit.items, j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; UI.render(); }
 function autoWeek() {
   const d = (S.profile && S.profile.days) || 3, gym = S.profile && S.profile.place === 'gym', mine = S.plans[0];
@@ -105,10 +108,10 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   const t = e.target, k = t.dataset.in; if (!k) return;
-  if (k === 'lib') { UI.st.lib[t.dataset.k] = t.value; if (t.id === 'lib-q') { $('#lib-res').innerHTML = UI.libResults(); } else UI.render(); }
+  if (k === 'lib') { UI.st.lib[t.dataset.k] = t.value; if (t.id === 'lib-q') { $('#lib-res').innerHTML = UI.libResults(); Thumbs.scan($('#lib-res')); } else UI.render(); }
   else if (k === 'libsafe') { UI.st.lib.safe = t.checked; UI.render(); }
   else if (k === 'rec') { UI.st.body.rec = t.checked; UI.render(); }
-  else if (k === 'rot') { UI.st.body.rot = t.checked; Stage.autoRot = t.checked; }
+  
   else if (k === 'path') { Stage.path = t.checked; }
   else if (k === 'plname') UI.st.edit.name = t.value;
   else if (k === 'it') { const it = UI.st.edit.items[+t.dataset.i], key = t.dataset.k; it[key] = key === 'reps' ? t.value : Math.max(0, +t.value || 0); if (key === 'sets' && it.sets < 1) it.sets = 1; const s = $('.ed-sum b'); if (s) s.textContent = Math.round(estSession({warm:[], main:UI.st.edit.items, cool:[]}) / 60) + 6; }
@@ -127,7 +130,7 @@ document.addEventListener('submit', e => {
     const err = $('#onb-err'); if (!p.exp || !p.goal || !p.place || !p.days || !p.min) { err.hidden = false; err.textContent = 'أكمل الأسئلة المرقّمة من ١ إلى ٦.'; return; }
     if (p.age && (p.age < 13 || p.age > 100)) { err.hidden = false; err.textContent = 'العمر يجب أن يكون بين 13 و100.'; return; }
     const first = !S.profile; S.profile = p;
-    UI.st.quick = {focus:p.goal === 'mobility' ? 'mobility' : 'full', min:p.min, place:p.place};
+    UI.st.quick = {focus:p.goal === 'mobility' ? 'mobility' : 'full', min:p.min, place:p.place, style:'circuit', picked:null};
     if (first || !Object.keys(S.week).length) autoWeek();
     save(); location.hash = 'home'; UI.toast(first ? 'جاهز! اخترنا لك جدولًا أسبوعيًا وتمرين اليوم.' : 'حُفظ الملف');
   } else if (f.id === 'ask') { const i = $('#ask-in'); askCoach(i.value); }

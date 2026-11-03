@@ -156,12 +156,11 @@ X('childs-pose','وضعية الطفل','Child\'s Pose','stretch',{s:'child'},'s
 
 const EXI = Object.fromEntries(EX.map(e => [e.id, e]));
 const exCat = e => {
-  if (e.kind === 'c') return 'cardio'; if (e.kind === 'm') return 'mob'; if (e.kind === 'x') return 'stretch';
-  const m = e.prim[0];
-  return m.startsWith('chest') ? 'chest' : m.startsWith('delt') ? 'shoulders' : ['traps','upper_back','lats','lower_back'].includes(m) ? 'back'
-    : m === 'biceps' ? 'biceps' : m === 'triceps' ? 'triceps' : m === 'forearms' ? 'forearms' : ['abs','obliques','hip_flexors'].includes(m) ? 'abs' : m;
+  if (e.kind === 'c') return 'cardio'; if (e.kind === 'm' || e.kind === 'x') return 'mob';
+  const g = MUSCLES[e.prim[0]].g;
+  return g === 'core' || e.prim[0] === 'hip_flexors' ? 'abs' : e.prim[0] === 'glutes' ? 'glutes' : g;
 };
-const CATS = {chest:'الصدر',back:'الظهر',shoulders:'الأكتاف',biceps:'البايسبس',triceps:'الترايسبس',forearms:'الساعد',abs:'البطن والجذع',glutes:'الأرداف',quads:'الفخذ الأمامية',hamstrings:'الفخذ الخلفية',calves:'السمانة',full:'الجسم كامل',cardio:'كارديو',mob:'حركة ومرونة',stretch:'إطالة'};
+const CATS = {chest:'الصدر',back:'الظهر',shoulders:'الأكتاف',arms:'الذراعان',abs:'البطن والجذع',glutes:'الأرداف',legs:'الأرجل',cardio:'كارديو',mob:'حركة وإطالة'};
 
 // Ready-made programs: [exerciseId, sets, reps|tSEC, rest]
 const PROGRAMS = [

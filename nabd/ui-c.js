@@ -12,7 +12,7 @@ UI.views.welcome = function () {
     <a class="card pillar" href="#progress"><span class="pn">٤</span><h3>مركز متابعة الأداء</h3><p>سجلّك وأرقامك القياسية وتقويم التزامك، وتوزيع تمارينك على العضلات ومؤشر التوازن.</p></a>
   </section>`;
 };
-UI.after.welcome = function () { if (Stage.mount($('#stage'), {mode:'explore', autoRot:true})) { const e = EXI['goblet-squat']; Stage.setAnim(e, {view:'side', instant:true}); Stage.autoRot = true; Stage.speed = .8; Stage.path = true; } };
+UI.after.welcome = function () { if (Stage.mount($('#stage'), {mode:'demo'})) { Stage.setAnim(EXI['goblet-squat'], {view:'side'}); Stage.speed = .8; Stage.playing = true; } };
 
 UI.views.onboard = function () {
   const p = S.profile || {exp:'beg', goal:'general', place:'home', eq:[], days:3, min:30, limits:[]};
@@ -155,5 +155,5 @@ UI.views.prefs = function () {
   <section class="card"><h3>ما الذي يعمل الآن وما المخطط له</h3><ul class="bul">
   <li><b>يعمل:</b> الجسم التفاعلي، ومكتبة ${EX.length} تمرينًا بحركات حيّة، والجلسات الموجّهة بالمؤقتات والصوت، ومنشئ الخطط والجدول الأسبوعي، والتحليلات، والمدرب القائم على القواعد، ومذكرة الاستشفاء، والموسيقى المولّدة.</li>
   <li><b>مؤقت:</b> الجسم رسم توضيحي، والحركات مولّدة برمجيًا على هيكل عظمي.</li>
-  <li><b>مخطط لاحقًا:</b> الحسابات والمزامنة السحابية عبر Supabase، وجسم أنثوي، ومدرب ذكاء اصطناعي توليدي، وتطبيق قابل للتثبيت (PWA)، وتذكيرات الإشعارات، والواجهة الإنجليزية الكاملة.</li></ul></section>`;
+  <li><b>مخطط لاحقًا:</b> الحسابات والمزامنة السحابية عبر Supabase، ونموذج رجل، ومدرب ذكاء اصطناعي توليدي، وتطبيق قابل للتثبيت (PWA)، وتذكيرات الإشعارات، والواجهة الإنجليزية الكاملة.</li></ul></section>`;
 };

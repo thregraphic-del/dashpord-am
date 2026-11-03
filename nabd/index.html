@@ -12,16 +12,16 @@
   --m-prim:#e2492b; --m-sec:#eda22f; --m-base:#d4aaa3; --skin:#c6cdd6;
   --good:#2b9a57; --warn:#cf8a12; --bad:#d23f31;
   --font-d:'Alexandria','IBM Plex Sans Arabic',system-ui,sans-serif; --font-b:'IBM Plex Sans Arabic',system-ui,'Segoe UI',Tahoma,sans-serif; --font-m:'IBM Plex Mono',ui-monospace,Menlo,monospace;
-  --r:16px; --sh:0 1px 2px rgba(18,26,35,.05),0 6px 20px rgba(18,26,35,.05);
+  --r:16px; --thumb-a:#f7f4ef; --thumb-b:#ece7df; --sh:0 1px 2px rgba(18,26,35,.05),0 6px 20px rgba(18,26,35,.05);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0b1117; --surface:#131b24; --surface2:#19232e; --ink:#e5ebf1; --muted:#91a0af; --line:#24313f;
   --accent:#3cc2ba; --accent-ink:#04211f; --accent-soft:#11302f; --m-prim:#ff6040; --m-sec:#ffb444; --m-base:#7a5557; --skin:#4a5767;
-  --good:#4cc17d; --warn:#e8a23a; --bad:#ff6b5b; --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}}
+  --good:#4cc17d; --warn:#e8a23a; --bad:#ff6b5b; --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); --thumb-a:#e9eef2; --thumb-b:#d5dde4; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0b1117; --surface:#131b24; --surface2:#19232e; --ink:#e5ebf1; --muted:#91a0af; --line:#24313f;
   --accent:#3cc2ba; --accent-ink:#04211f; --accent-soft:#11302f; --m-prim:#ff6040; --m-sec:#ffb444; --m-base:#7a5557; --skin:#4a5767;
-  --good:#4cc17d; --warn:#e8a23a; --bad:#ff6b5b; --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}
+  --good:#4cc17d; --warn:#e8a23a; --bad:#ff6b5b; --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); --thumb-a:#e9eef2; --thumb-b:#d5dde4; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
@@ -96,7 +96,7 @@ fieldset{border:0;padding:0;margin:0 0 16px;min-width:0}
 .cta-onb{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
 /* stage */
 .stage-wrap{padding:10px;display:flex;flex-direction:column;gap:8px}
-.stage{position:relative;height:min(62vh,520px);min-height:340px;border-radius:12px;background:radial-gradient(ellipse at 50% 35%,var(--surface2),var(--surface) 70%);overflow:hidden;touch-action:none} .stage.tall{height:min(66vh,560px)}
+.stage{position:relative;height:min(62vh,520px);min-height:340px;border-radius:12px;background:linear-gradient(180deg,var(--thumb-a),var(--thumb-b));overflow:hidden;touch-action:none} .stage.tall{height:min(66vh,560px)}
 .stage canvas{position:absolute;inset:0;display:block;width:100%;height:100%;cursor:grab}
 .stage-fail{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
 .stage-tip,.stage-tag{position:absolute;transform:translateX(50%);background:var(--ink);color:var(--bg);font-size:.8rem;padding:3px 9px;border-radius:8px;pointer-events:none;white-space:nowrap;z-index:2} .stage-tag{background:var(--m-prim);color:#fff;transform:translate(50%,-100%)}
@@ -192,6 +192,26 @@ body[data-view="workout"] .tabbar{display:none} body[data-view="workout"] main{p
 .pillars{display:grid;gap:12px} @media(min-width:700px){.pillars{grid-template-columns:repeat(2,1fr)}} @media(min-width:1000px){.pillars{grid-template-columns:repeat(4,1fr)}}
 .pillar{color:var(--ink);text-decoration:none;display:flex;flex-direction:column;gap:4px} .pillar:hover{border-color:var(--accent)} .pn{font-family:var(--font-d);color:var(--m-prim);font-size:1.4rem}
 details summary{cursor:pointer}
+
+/* exercise picture cards (vector figure thumbnails) */
+canvas.thumb{display:block;width:100%;height:150px;border-radius:12px;background:linear-gradient(180deg,var(--thumb-a),var(--thumb-b))}
+.excard canvas.thumb{height:170px;margin-bottom:8px}
+.pdose{font-family:var(--font-d);color:var(--accent);font-weight:600;font-size:.95rem;margin:0}
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline;margin-top:6px}
+.phrow{font-size:.85rem;color:var(--muted);display:flex;gap:8px;align-items:center;margin:4px 0}
+.pick-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pick-list.pool{max-height:none}
+.prow{display:grid;grid-template-columns:auto 132px 1fr;gap:12px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:opacity .2s,border-color .2s}
+.prow:not(.on){opacity:.72} .prow.on{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.pchk{width:34px;height:34px;border-radius:50%;border:2px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;cursor:pointer;font-size:1rem}
+.prow.on .pchk{background:var(--accent);color:var(--accent-ink)}
+.pthumb{position:relative;display:block} .pthumb canvas.thumb{height:104px}
+.pnum{position:absolute;top:6px;inset-inline-start:6px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:.78rem;font-weight:700}
+.pinfo{display:flex;flex-direction:column;gap:1px;min-width:0} .pinfo b{font-family:var(--font-d);font-weight:600}
+@media(max-width:480px){.prow{grid-template-columns:auto 104px 1fr}.pthumb canvas.thumb{height:92px}}
+.quick-foot.sticky{position:sticky;bottom:calc(66px + env(safe-area-inset-bottom,0px));background:var(--surface);padding:10px 0 4px;border-top:1px solid var(--line);z-index:3}
+@media(min-width:900px){.quick-foot.sticky{bottom:0}}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <div id="app" dir="rtl"></div>
@@ -199,6 +219,7 @@ details summary{cursor:pointer}
 <script src="data-patterns.js"></script>
 <script src="data-exercises.js"></script>
 <script src="data-exercises2.js"></script>
+<script src="data-exercises3.js"></script>
 <script src="figure2d.js"></script>
 <script src="audio.js"></script>
 <script src="core.js"></script>

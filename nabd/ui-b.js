@@ -106,7 +106,7 @@ UI.liveTick = function () {
 UI.liveSummary = function (el) {
   const L = S.live, h = S.history.find(x => x.id === L.histId), sets = L.log.filter(x => x.reps), reps = sets.reduce((a, s) => a + s.reps, 0), vol = sets.reduce((a, s) => a + s.reps * (s.weight || 0), 0);
   const mus = new Set(); L.log.forEach(x => EXI[x.id].prim.forEach(m => mus.add(m)));
-  if (Stage.ok) { Stage.setAnim(null); Stage.setHL({prim:[...mus], sec:[]}); Stage.autoRot = true; }
+  if (Stage.ok) { Stage.fv.mode = 'demo'; Stage.setAnim(null); Stage.setHL({prim:[...mus], sec:[]}); Stage.view('front'); }
   el.innerHTML = `<p class="eyebrow">اكتملت الجلسة</p><h2>أحسنت! 🎉</h2>
   <div class="sumg"><div><b class="mono">${fmt((L.endAt - L.start - L.pausedTotal) / 1000)}</b><span>المدة</span></div><div><b>${sets.length}</b><span>مجموعة</span></div><div><b>${num(reps)}</b><span>عدّة</span></div><div><b>${num(vol)}</b><span>كغ حجم كلي</span></div></div>
   <p class="small">العضلات التي درّبتها (ملوّنة على المجسم): ${esc(muscleNames([...mus]))}</p>
