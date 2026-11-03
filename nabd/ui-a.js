@@ -99,7 +99,7 @@ UI.views.home = function () {
 // ---------- BODY EXPLORER ----------
 UI.views.body = function () {
   const b = this.st.body;
-  return `<section class="page-head"><h1>الجسم ثلاثي الأبعاد</h1><p class="muted">اسحب لتدوير الجسم، واستخدم عجلة الفأرة أو إصبعين للتكبير، واضغط على أي عضلة لتعرف تمارينها.</p></section>
+  return `<section class="page-head"><h1>الجسم التفاعلي</h1><p class="muted">اسحب يمينًا أو يسارًا لتدوير الجسم، واستخدم عجلة الفأرة للتكبير، واضغط على أي عضلة لتعرف تمارينها.</p></section>
   <div class="explorer">
     <div class="stage-wrap card">
       <div class="stage" id="stage"></div>
@@ -109,7 +109,7 @@ UI.views.body = function () {
         <label class="tog"><input type="checkbox" id="rot-t" data-in="rot" ${b.rot ? 'checked' : ''}> تدوير تلقائي</label>
       </div>
       ${b.rec ? `<div class="legend"><span><i class="dot bad"></i>أقل من 24 ساعة</span><span><i class="dot warn"></i>24–48 ساعة</span><span><i class="dot good"></i>جاهزة (+48)</span><span><i class="dot base"></i>لم تُدرَّب مؤخرًا</span></div>` : ''}
-      <p class="note">نموذج تشريحي مبسّط من إنتاجنا (مؤقت): العضلات الرئيسية الـ19 أجزاء مستقلة قابلة للضغط. نموذج تشريحي واقعي مرخّص وجسم أنثوي مخطط لهما في مرحلة لاحقة.</p>
+      <p class="note">رسم توضيحي لجسم بشري بنسب حقيقية، يتحرك على هيكل عظمي بمفاصل حقيقية. العضلات الـ19 قابلة للضغط. الجسم الأنثوي مخطط له لاحقًا.</p>
     </div>
     <aside class="card mpanel" id="mpanel">${this.musclePanel(b.sel)}</aside>
   </div>
@@ -176,7 +176,7 @@ UI.exCard = function (e) {
 };
 UI.views.library = function () {
   const f = this.st.lib, sel = (k, opts) => `<select id="f-${k}" data-in="lib" data-k="${k}">${opts.map(([v, t]) => `<option value="${v}" ${f[k] == v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-  return `<section class="page-head"><h1>مكتبة التمارين</h1><p class="muted">${EX.length} تمرينًا بأسماء عربية وإنجليزية، ولكل تمرين عرض حركة ثلاثي الأبعاد وخطوات وأخطاء شائعة.</p></section>
+  return `<section class="page-head"><h1>مكتبة التمارين</h1><p class="muted">${EX.length} تمرينًا بأسماء عربية وإنجليزية، ولكل تمرين عرض حركة حيّ وخطوات وأخطاء شائعة.</p></section>
   <div class="libbar">
     <input type="search" id="lib-q" data-in="lib" data-k="q" placeholder="ابحث باسم التمرين أو العضلة… (مثال: ضغط، أرداف، Squat)" value="${esc(f.q)}">
     <div class="seg">${[['all','الكل'],['fav','المفضلة'],['recent','أُدّيت مؤخرًا']].map(([k, t]) => `<button aria-pressed="${f.tab === k}" data-act="lib-tab" data-v="${k}">${t}</button>`).join('')}</div>
@@ -223,7 +223,7 @@ UI.views.ex = function (r) {
         <label class="tog"><input type="checkbox" id="path-t" data-in="path" ${Stage.path ? 'checked' : ''}> مسار الحركة</label>
       </div>
       <div class="legend"><span><i class="dot prim"></i>أساسية: ${esc(muscleNames(e.prim))}</span>${e.sec.length ? `<span><i class="dot sec"></i>مساعدة: ${esc(muscleNames(e.sec))}</span>` : ''}</div>
-      <p class="note">حركة مولّدة برمجيًا على مجسم مبسّط لتوضيح المسار والمفاصل والعضلات العاملة، وليست تسجيل حركة لمدرب حقيقي.</p>
+      <p class="note">رسم توضيحي متحرك على هيكل عظمي بمفاصل حقيقية لتوضيح المسار والعضلات العاملة، وليس تصويرًا لمدرب حقيقي.</p>
     </div>
     <div class="dcol">
       <div class="card dose"><div><span class="muted small">الجرعة المقترحة</span><b>${dose}</b></div><div><span class="muted small">الراحة</span><b>${e.rest} ث</b></div>${pr ? `<div><span class="muted small">أفضل أداء لك</span><b>${pr.w ? pr.w + ' كغ × ' : ''}${pr.r}</b></div>` : ''}</div>

@@ -109,7 +109,7 @@ document.addEventListener('input', e => {
   else if (k === 'libsafe') { UI.st.lib.safe = t.checked; UI.render(); }
   else if (k === 'rec') { UI.st.body.rec = t.checked; UI.render(); }
   else if (k === 'rot') { UI.st.body.rot = t.checked; Stage.autoRot = t.checked; }
-  else if (k === 'path') { Stage.path = t.checked; Stage.pathLine.visible = t.checked && !!Stage.anim; }
+  else if (k === 'path') { Stage.path = t.checked; }
   else if (k === 'plname') UI.st.edit.name = t.value;
   else if (k === 'it') { const it = UI.st.edit.items[+t.dataset.i], key = t.dataset.k; it[key] = key === 'reps' ? t.value : Math.max(0, +t.value || 0); if (key === 'sets' && it.sets < 1) it.sets = 1; const s = $('.ed-sum b'); if (s) s.textContent = Math.round(estSession({warm:[], main:UI.st.edit.items, cool:[]}) / 60) + 6; }
   else if (k === 'edq') { UI.st.editQ = t.value; clearTimeout(UI._edq); UI._edq = setTimeout(() => { UI.render(); const q = $('#ed-q'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }, 350); }

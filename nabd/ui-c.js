@@ -1,13 +1,13 @@
 // Welcome, onboarding, coach, recovery, music, profile, prefs
 UI.views.welcome = function () {
   return `<section class="landing"><div class="land-copy"><p class="eyebrow">نبض · منصة تدريب شخصي</p><h1>مدربك الشخصي، ومختبر تشريح، وجلسة تمرين موجّهة، في مكان واحد.</h1>
-  <p class="lead">اضغط على أي عضلة لتعرف وظيفتها وتمارينها، وشاهد كل حركة ثلاثية الأبعاد من كل الزوايا. ثم اضغط «ابدأ» ليقودك المدرب من الإحماء إلى التهدئة بالمؤقت والعدّات والصوت، ويسجّل إنجازك تلقائيًا.</p>
+  <p class="lead">اضغط على أي عضلة لتعرف وظيفتها وتمارينها، وشاهد كل حركة من كل الزوايا. ثم اضغط «ابدأ» ليقودك المدرب من الإحماء إلى التهدئة بالمؤقت والعدّات والصوت، ويسجّل إنجازك تلقائيًا.</p>
   <div class="land-cta"><a class="btn primary big" href="#onboard">ابدأ بإعداد ملفك (دقيقة واحدة)</a><a class="btn big" href="#home">جرّب تمرينًا الآن</a></div>
   <p class="muted small">بلا تسجيل وبلا إعلانات. بياناتك محفوظة على جهازك فقط.</p></div>
   <div class="stage-wrap land-stage"><div class="stage tall" id="stage"></div></div></section>
   <section class="pillars">
-    <a class="card pillar" href="#body"><span class="pn">١</span><h3>جسم الإنسان ثلاثي الأبعاد</h3><p>19 عضلة قابلة للضغط، مع موقع كل عضلة ووظيفتها وتمارينها والأخطاء الشائعة فيها.</p></a>
-    <a class="card pillar" href="#library"><span class="pn">٢</span><h3>مدرب ثلاثي الأبعاد</h3><p>${EX.length} تمرينًا بحركة ثلاثية الأبعاد من الأمام والجانب والخلف، مع التبطيء ومسار الحركة ومقارنة الأداء الصحيح بالخاطئ.</p></a>
+    <a class="card pillar" href="#body"><span class="pn">١</span><h3>جسم الإنسان التفاعلي</h3><p>19 عضلة قابلة للضغط، مع موقع كل عضلة ووظيفتها وتمارينها والأخطاء الشائعة فيها.</p></a>
+    <a class="card pillar" href="#library"><span class="pn">٢</span><h3>مدرب يعرض الحركة</h3><p>${EX.length} تمرينًا بحركة حيّة من الأمام والجانب والخلف، مع التبطيء ومسار الحركة ومقارنة الأداء الصحيح بالخاطئ.</p></a>
     <a class="card pillar" href="#home"><span class="pn">٣</span><h3>جلسة تمرين مباشرة</h3><p>مؤقت دقيق للعمل والراحة، وعدّات وأوزان، وصوت مدرب عربي، وموسيقى، وانتقال تلقائي بين التمارين.</p></a>
     <a class="card pillar" href="#progress"><span class="pn">٤</span><h3>مركز متابعة الأداء</h3><p>سجلّك وأرقامك القياسية وتقويم التزامك، وتوزيع تمارينك على العضلات ومؤشر التوازن.</p></a>
   </section>`;
@@ -43,7 +43,7 @@ UI.coachAnswer = function (msg) {
     const alt = EX.filter(x => x.id !== ex.id && x.prim[0] === ex.prim[0] && x.kind === ex.kind).slice(0, 5);
     return `<p>بدائل «${esc(ex.ar)}» لنفس العضلة (${esc(MUSCLES[ex.prim[0]].ar)}):</p><ul class="bul">${alt.map(a => `<li><a href="#ex-${a.id}">${esc(a.ar)}</a> · ${a.eq.map(q => EQ[q]).join('/')} · ${LVL[a.lvl]}</li>`).join('')}</ul>`;
   }
-  if (ex) { const t = TX[ex.tx] || TX.mob; return `<p><b>${esc(ex.ar)}</b> يستهدف ${esc(muscleNames(ex.prim))}${ex.sec.length ? '، ويساعد فيه ' + esc(muscleNames(ex.sec)) : ''}.</p><ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><p><b>التنفس:</b> ${esc(t.br)}</p><p><b>تجنّب:</b> ${t.mis.map(esc).join('، ')}.</p><a class="btn sm" href="#ex-${ex.id}">شاهد الحركة ثلاثية الأبعاد</a>`; }
+  if (ex) { const t = TX[ex.tx] || TX.mob; return `<p><b>${esc(ex.ar)}</b> يستهدف ${esc(muscleNames(ex.prim))}${ex.sec.length ? '، ويساعد فيه ' + esc(muscleNames(ex.sec)) : ''}.</p><ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><p><b>التنفس:</b> ${esc(t.br)}</p><p><b>تجنّب:</b> ${t.mis.map(esc).join('، ')}.</p><a class="btn sm" href="#ex-${ex.id}">شاهد الحركة</a>`; }
   if (has('اليوم', 'وش أتمرن', 'ماذا أتمرن', 'إيش أتمرن', 'ايش اتمرن', 'أتمرن ايش', 'أدرب')) {
     const rec = recoveryMap(), scores = Object.entries({legs:['quads','glutes','hamstrings'], upper:['chest_lower','lats','delt_side'], core:['abs','obliques']}).map(([k, ms]) => [k, Math.min(...ms.map(x => rec[x] ?? 999))]);
     scores.sort((a, b) => b[1] - a[1]); const f = scores[0][0];
@@ -153,7 +153,7 @@ UI.views.prefs = function () {
   <div id="xport"></div>
   ${conf === 'wipe' ? `<div class="confirm"><p><b>حذف كل البيانات نهائيًا؟</b> لا يمكن التراجع.</p><button class="btn danger" data-act="wipe">نعم، احذف كل شيء</button><button class="btn" data-act="confirm-cancel">إلغاء</button></div>` : `<button class="btn ghost danger-t" data-act="wipe-ask">${ic('trash')} حذف كل بياناتي</button>`}</section>
   <section class="card"><h3>ما الذي يعمل الآن وما المخطط له</h3><ul class="bul">
-  <li><b>يعمل:</b> الجسم التفاعلي ثلاثي الأبعاد، ومكتبة ${EX.length} تمرينًا بحركات ثلاثية الأبعاد، والجلسات الموجّهة بالمؤقتات والصوت، ومنشئ الخطط والجدول الأسبوعي، والتحليلات، والمدرب القائم على القواعد، ومذكرة الاستشفاء، والموسيقى المولّدة.</li>
-  <li><b>مؤقت:</b> المجسم أسلوبي مبسّط من إنتاجنا، والحركات مولّدة برمجيًا.</li>
-  <li><b>مخطط لاحقًا:</b> الحسابات والمزامنة السحابية عبر Supabase، ونموذج تشريحي واقعي مرخّص، وجسم أنثوي، ومدرب ذكاء اصطناعي توليدي، وتطبيق قابل للتثبيت (PWA)، وتذكيرات الإشعارات، والواجهة الإنجليزية الكاملة.</li></ul></section>`;
+  <li><b>يعمل:</b> الجسم التفاعلي، ومكتبة ${EX.length} تمرينًا بحركات حيّة، والجلسات الموجّهة بالمؤقتات والصوت، ومنشئ الخطط والجدول الأسبوعي، والتحليلات، والمدرب القائم على القواعد، ومذكرة الاستشفاء، والموسيقى المولّدة.</li>
+  <li><b>مؤقت:</b> الجسم رسم توضيحي، والحركات مولّدة برمجيًا على هيكل عظمي.</li>
+  <li><b>مخطط لاحقًا:</b> الحسابات والمزامنة السحابية عبر Supabase، وجسم أنثوي، ومدرب ذكاء اصطناعي توليدي، وتطبيق قابل للتثبيت (PWA)، وتذكيرات الإشعارات، والواجهة الإنجليزية الكاملة.</li></ul></section>`;
 };
