@@ -162,19 +162,19 @@ class FigView {
     const J = sk.J, R = sk.R, items = [], push = (dz, fn) => items.push({dz, fn});
     const seg = (f, a, b) => [sk.at(f, a), sk.at(f, b)];
     const limb = (f, A, B, prof, kind, mus, bias, opt) => push(depth(lerp3(A, B, .5)) + bias, () => { this.limb(A, B, R[f], prof, kind, opt); this.muscles(sk, f, mus, act); });
-    push(depth(J.spine), () => { const [a, b] = seg('spine', [0, -.04, 0], [0, .52, 0]); this.limb(a, b, R.spine, PROF.torso, 'skin', {caps:2, cover:[[.56, .955]]}); this.muscles(sk, 'spine', true, act); });
-    push(depth(J.root) + .001, () => { const [a, b] = seg('root', [0, -.13, 0], [0, .05, 0]); this.limb(a, b, R.root, PROF.pelvis, 'fit', {caps:1}); this.muscles(sk, 'root', true, act); });
+    push(depth(J.spine), () => { const [a, b] = seg('spine', [0, -.04, 0], [0, .52, 0]); this.limb(a, b, R.spine, PROF.torso, 'skin', {caps:2, cover:[[.56, .955]]}); this.details(sk); this.muscles(sk, 'spine', true, act); });
+    push(depth(J.root) + .001, () => { const [a, b] = seg('root', [0, -.13, 0], [0, .05, 0]); this.limb(a, b, R.root, PROF.pelvis, 'fit', {caps:1, ol:1, lines:[.86]}); this.muscles(sk, 'root', true, act); });
     { const [a, b] = seg('neck', [0, -.01, 0], [0, .1, 0]); limb('neck', a, b, PROF.neck, 'skin', false, .02); }
-    { const base = sk.at('head', [0, .055, -.085]), back = mv(R.head, [0, .2, -1]), end = add(base, [back[0] * .07, -.2 + back[1] * .03, back[2] * .07]);
-      push(depth(lerp3(base, end, .5)) + .028, () => this.limb(base, end, R.head, PROF.tail, 'hair', {})); }
+    { const base = sk.at('head', [0, .055, -.085]), back = mv(R.head, [0, .2, -1]), sw = Math.sin(performance.now() / 420) * .012, end = add(base, [back[0] * .07 + sw, -.2 + back[1] * .03, back[2] * .07]);
+      push(depth(lerp3(base, end, .5)) + .028, () => { this.limb(base, end, R.head, PROF.tail, 'hair', {ol:2}); this.hairTie(base, R.head); }); }
     push(depth(J.head) + .03, () => this.head(sk));
     for (const S of LR) {
-      { const [a, b] = seg('sh'+S, [0, .01, 0], [0, -.29, 0]); limb('sh'+S, a, b, PROF.uarm, 'skin', true, .02); }
-      { const [a, b] = seg('el'+S, [0, 0, 0], [0, -.26, 0]); limb('el'+S, a, b, PROF.farm, 'skin', true, .022); }
-      { const [a, b] = seg('wr'+S, [0, 0, 0], [0, -.095, 0]); limb('wr'+S, a, b, PROF.hand, 'skin', false, .024); }
-      { const [a, b] = seg('hp'+S, [0, .02, 0], [0, -.44, 0]); limb('hp'+S, a, b, PROF.thigh, 'fit', true, .01); }
-      { const [a, b] = seg('kn'+S, [0, 0, 0], [0, -.43, 0]); limb('kn'+S, a, b, PROF.shin, 'skin', true, .011, {cover:[[0, .88]]}); }
-      { const [a, b] = seg('an'+S, [0, -.05, -.06], [0, -.05, .16]); limb('an'+S, a, b, PROF.foot, 'shoe', false, .012, {axes:[[1,0,0],[0,1,0]]}); }
+      { const [a, b] = seg('sh'+S, [0, .01, 0], [0, -.29, 0]); limb('sh'+S, a, b, PROF.uarm, 'skin', true, .02, {s0:2}); }
+      { const [a, b] = seg('el'+S, [0, 0, 0], [0, -.26, 0]); limb('el'+S, a, b, PROF.farm, 'skin', true, .022, {s0:1}); }
+      { const [a, b] = seg('wr'+S, [0, 0, 0], [0, -.095, 0]); limb('wr'+S, a, b, PROF.hand, 'skin', false, .024, {s0:2, ol:2}); }
+      { const [a, b] = seg('hp'+S, [0, .02, 0], [0, -.44, 0]); limb('hp'+S, a, b, PROF.thigh, 'fit', true, .01, {s0:3, seam:1}); }
+      { const [a, b] = seg('kn'+S, [0, 0, 0], [0, -.43, 0]); limb('kn'+S, a, b, PROF.shin, 'skin', true, .011, {cover:[[0, .88]], s0:1, seam:1}); }
+      { const [a, b] = seg('an'+S, [0, -.05, -.06], [0, -.05, .16]); limb('an'+S, a, b, PROF.foot, 'shoe', false, .012, {axes:[[1,0,0],[0,1,0]], ol:3}); }
       if (this.eqKind === 'db') push(depth(sk.mk('hand'+S)) + .03, () => this.dumbbell(sk, S));
     }
     if (this.eqKind === 'bar') this.barbell(push, sk);
@@ -207,14 +207,25 @@ class FigView {
     g.fillStyle = grad(PAL[kind]); g.fill(path);
     if (opt.cover) {
       g.save(); g.clip(path); g.fillStyle = grad(PAL.fit);
-      opt.cover.forEach(([t0, t1]) => { const i0 = Math.round(t0 * n), i1 = Math.round(t1 * n), w = 3 * Math.max(...hs), e0 = cs[i0], e1 = cs[i1];
+      opt.cover.forEach(([t0, t1]) => { const i0 = Math.round(t0 * n), i1 = Math.round(t1 * n), w = 3 * Math.max(...hs), e0 = t0 === 0 ? [cs[0][0] - dx * w, cs[0][1] - dy * w] : cs[i0], e1 = t1 === 1 ? [cs[n][0] + dx * w, cs[n][1] + dy * w] : cs[i1];
         g.beginPath(); g.moveTo(e0[0] + p[0]*w, e0[1] + p[1]*w); g.lineTo(e1[0] + p[0]*w, e1[1] + p[1]*w); g.lineTo(e1[0] - p[0]*w, e1[1] - p[1]*w); g.lineTo(e0[0] - p[0]*w, e0[1] - p[1]*w); g.closePath(); g.fill();
         g.strokeStyle = 'rgba(40,70,85,.35)'; g.lineWidth = 1.2 * d; [i0, i1].forEach(i => { if (i > 0 && i < n) { g.beginPath(); g.moveTo(cs[i][0] + p[0]*hs[i], cs[i][1] + p[1]*hs[i]); g.lineTo(cs[i][0] - p[0]*hs[i], cs[i][1] - p[1]*hs[i]); g.stroke(); } }); });
       g.restore();
     }
     if (kind === 'shoe') { g.save(); g.clip(path); g.fillStyle = COL.sole; g.fillRect(0, this.oy - 3 * d, this.cv.width, 8 * d); g.restore(); }
-    g.strokeStyle = kind === 'fit' ? 'rgba(40,70,85,.55)' : kind === 'shoe' ? 'rgba(80,90,100,.6)' : kind === 'hair' ? 'rgba(20,10,5,.6)' : COL.line;
-    g.lineWidth = (this.thumb ? 1 : 1.3) * d; g.stroke(path);
+    { const side = lit > 0 ? left : right, s0 = Math.max(1, opt.s0 || 1); g.save(); g.clip(path); g.globalAlpha = kind === 'skin' ? .32 : .22; g.strokeStyle = '#ffffff'; g.lineWidth = Math.max(1, hm * .35); g.lineCap = 'round'; g.beginPath();
+      for (let i = s0; i < n; i++) { const q = [side[i][0] - p[0] * lit * hs[i] * .45, side[i][1] - p[1] * lit * hs[i] * .45]; i === s0 ? g.moveTo(q[0], q[1]) : g.lineTo(q[0], q[1]); } g.stroke(); g.restore(); }
+    if (opt.lines) { g.save(); g.clip(path); g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1.4 * d; opt.lines.forEach(t => { const i = Math.round(t * n); g.beginPath(); g.moveTo(cs[i][0] + p[0]*hs[i], cs[i][1] + p[1]*hs[i]); g.lineTo(cs[i][0] - p[0]*hs[i], cs[i][1] - p[1]*hs[i]); g.stroke(); }); g.restore(); }
+    if (opt.seam) { g.save(); g.clip(path); g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 1.1 * d; g.beginPath(); for (let i = 1; i < n; i++) { const q = [cs[i][0] - p[0] * lit * hs[i] * .55, cs[i][1] - p[1] * lit * hs[i] * .55]; i === 1 ? g.moveTo(q[0], q[1]) : g.lineTo(q[0], q[1]); } g.stroke(); g.restore(); }
+    if (kind === 'shoe' && !this.thumb) { g.save(); g.clip(path); g.fillStyle = 'rgba(90,100,112,.55)'; [.38, .5, .62].forEach(t => { const i = Math.round(t * n), q = cs[i]; g.beginPath(); g.arc(q[0] - p[0] * hs[i] * .3, q[1] - p[1] * hs[i] * .3, Math.max(1, hs[i] * .12), 0, Math.PI * 2); g.fill(); });
+      const i = Math.round(.8 * n); g.strokeStyle = 'rgba(120,130,140,.6)'; g.lineWidth = d; g.beginPath(); g.moveTo(cs[i][0] + p[0]*hs[i], cs[i][1] + p[1]*hs[i]); g.lineTo(cs[i][0] - p[0]*hs[i], cs[i][1] - p[1]*hs[i]); g.stroke(); g.restore(); }
+    const ol = opt.ol ?? 0, s0 = opt.s0 || 0, op = new Path2D();
+    op.moveTo(left[s0][0], left[s0][1]); for (let i = s0 + 1; i <= n; i++) op.lineTo(left[i][0], left[i][1]);
+    if ((ol & 2) && (caps & 2)) op.arc(cs[n][0], cs[n][1], hs[n], ang + Math.PI / 2, ang - Math.PI / 2, true); else op.moveTo(right[n][0], right[n][1]);
+    for (let i = n - 1; i >= s0; i--) op.lineTo(right[i][0], right[i][1]);
+    if ((ol & 1) && (caps & 1) && s0 === 0) op.arc(cs[0][0], cs[0][1], hs[0], ang - Math.PI / 2, ang + Math.PI / 2, true);
+    g.strokeStyle = kind === 'fit' ? 'rgba(40,70,85,.6)' : kind === 'shoe' ? 'rgba(80,90,100,.65)' : kind === 'hair' ? 'rgba(20,10,5,.65)' : COL.line;
+    g.lineWidth = (this.thumb ? 1 : 1.4) * d; g.lineJoin = 'round'; g.stroke(op);
     this.picks.push({path, id:null});
   }
   muscles(sk, frame, show, act) {
@@ -250,6 +261,7 @@ class FigView {
     const L = l => P(sk.at('head', l));
     const hg = g.createRadialGradient(q[0] - .03 * k, q[1] - .05 * k, 0, q[0], q[1], .13 * k); hg.addColorStop(0, COL.hairL); hg.addColorStop(1, COL.hair);
     ell(q, .088, .108, hg, 'rgba(20,10,5,.55)');
+    { g.save(); g.globalAlpha = .35; g.strokeStyle = COL.hairL; g.lineWidth = .012 * k; g.lineCap = 'round'; const a1 = L([-.05, .085, -.02]), a2 = L([0, .112, -.01]), a3 = L([.04, .09, -.04]); g.beginPath(); g.moveTo(a1[0], a1[1]); g.quadraticCurveTo(a2[0], a2[1], a3[0], a3[1]); g.stroke(); g.restore(); }
     [1, -1].forEach(s => { if (vis([s, 0, 0]) > .1) ell(L([s * .083, -.012, -.005]), .015, .025, COL.skin, COL.line); });
     if (fd > -.45) {
       const fc = L([0, -.02, .03 * clamp(fd + .5, 0, 1)]);
@@ -260,10 +272,39 @@ class FigView {
         if (vis([0, -.1, 1]) > .05) { const n1 = L([0, .005, .095]), n2 = L([0, -.022, .104]), n3 = L([.007, -.027, .095]); g.strokeStyle = COL.skinD; g.lineWidth = 1.3 * d; g.beginPath(); g.moveTo(n1[0], n1[1]); g.lineTo(n2[0], n2[1]); g.lineTo(n3[0], n3[1]); g.stroke(); }
         if (vis([0, -.3, 1]) > .1) { const m1 = L([-.019, -.052, .085]), m2 = L([0, -.058, .09]), m3 = L([.019, -.052, .085]); g.fillStyle = COL.lips; g.beginPath(); g.moveTo(m1[0], m1[1]); g.quadraticCurveTo(m2[0], m2[1] - 2 * d, m3[0], m3[1]); g.quadraticCurveTo(m2[0], m2[1] + 3 * d, m1[0], m1[1]); g.fill(); }
       }
+      if (!this.thumb || k > 120) [1, -1].forEach(s => {
+        if (vis([s * .5, -.2, 1]) > .3) { const ch = L([s * .048, -.028, .072]), rg = g.createRadialGradient(ch[0], ch[1], 0, ch[0], ch[1], .022 * k); rg.addColorStop(0, 'rgba(230,120,110,.35)'); rg.addColorStop(1, 'rgba(230,120,110,0)'); g.fillStyle = rg; g.beginPath(); g.arc(ch[0], ch[1], .022 * k, 0, Math.PI * 2); g.fill(); }
+        if (vis([s * .35, .1, 1]) > .25) { const e = L([s * .031, .008, .085]); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(e[0] - .0015 * k, e[1] - .0018 * k, Math.max(.8 * d, .0016 * k), 0, Math.PI * 2); g.fill(); } });
+      if (Math.abs(fd) < .75 && (!this.thumb || k > 90)) { // profile: nose and lips break the face outline like a real side view
+        const nb = L([0, .012, .09]), nt = L([0, -.022, .106]), nl = L([0, -.03, .092]), lp = L([0, -.054, .088]);
+        g.fillStyle = COL.skin; g.strokeStyle = COL.line; g.lineWidth = 1.1 * d; g.beginPath(); g.moveTo(nb[0], nb[1]); g.quadraticCurveTo(nt[0], nt[1] - .004 * k, nt[0], nt[1]); g.lineTo(nl[0], nl[1]); g.closePath(); g.fill(); g.stroke();
+        g.fillStyle = COL.lips; g.beginPath(); g.ellipse(lp[0], lp[1], .005 * k, .0045 * k, 0, 0, Math.PI * 2); g.fill();
+        [1, -1].forEach(s => { if (vis([s * .6, .05, .8]) > .2) { const e = L([s * .028, .008, .088]); g.fillStyle = '#3a2418'; g.beginPath(); g.ellipse(e[0], e[1], .006 * k, .0065 * k, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#2a1a12'; g.lineWidth = 1.6 * d; const b1 = L([s * .03, .032, .085]), b2 = L([s * .01, .036, .095]); g.beginPath(); g.moveTo(b1[0], b1[1]); g.lineTo(b2[0], b2[1]); g.stroke(); } });
+      }
       const h1 = L([-.07, .06, .055]), h2 = L([0, .085, .075]), h3 = L([.07, .06, .055]);
       if (fd > -.1) { g.strokeStyle = COL.hair; g.lineWidth = .02 * k; g.lineCap = 'round'; g.beginPath(); g.moveTo(h1[0], h1[1]); g.quadraticCurveTo(h2[0], h2[1], h3[0], h3[1]); g.stroke(); }
     }
     const pp = new Path2D(); pp.ellipse(q[0], q[1], .088 * k, .108 * k, rot, 0, Math.PI * 2); this.picks.push({path:pp, id:null});
+  }
+  details(sk) {
+    if (this.thumb && this.k < 110) return;
+    const g = this.g, P = this.P, k = this.k, d = this.dpr || 1, R = sk.R.spine, sy = Math.sin(this.yaw), cy = Math.cos(this.yaw);
+    const vis = l => { const w = mv(R, l); return (-w[0] * sy + w[2] * cy) / (Math.hypot(...l) || 1); };
+    const L = l => P(sk.at('spine', l)), curve = (a, c, b, col, w, al) => { const A = L(a), C = L(c), B = L(b); g.save(); g.globalAlpha = al; g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(A[0], A[1]); g.quadraticCurveTo(C[0], C[1], B[0], B[1]); g.stroke(); g.restore(); };
+    const front = vis([0, 0, 1]), back = -front;
+    [1, -1].forEach(s => {
+      if (vis([s * .3, 0, 1]) > -.2) curve([s * .055, .49, .1], [s * .09, .53, .06], [s * .115, .53, .0], COL.fitD, .014 * k, .95);
+      if (vis([s * .3, 0, -1]) > -.2) curve([s * .115, .53, .0], [s * .1, .52, -.06], [s * .07, .49, -.09], COL.fitD, .014 * k, .95);
+      if (front > .2) curve([s * .02, .5, .08], [s * .07, .51, .095], [s * .125, .505, .06], COL.skinD, 1.4 * d, .5 * front);
+      if (back > .25) curve([s * .04, .42, -.1], [s * .09, .36, -.105], [s * .06, .3, -.098], COL.skinD, 1.3 * d, .35 * back);
+    });
+    if (front > .3) { const nv = L([0, .1, .093]); g.save(); g.globalAlpha = .55 * front; g.fillStyle = COL.skinD; g.beginPath(); g.ellipse(nv[0], nv[1], .006 * k, .009 * k, 0, 0, Math.PI * 2); g.fill(); g.restore();
+      curve([0, .28, .1], [0, .22, .099], [0, .15, .095], COL.skinD, 1.1 * d, .22 * front); }
+    if (back > .3) curve([0, .3, -.1], [0, .2, -.098], [0, .08, -.092], COL.skinD, 1.2 * d, .3 * back);
+  }
+  hairTie(base, R) {
+    const g = this.g, q = this.P(base), k = this.k; g.save(); g.fillStyle = COL.fitD; g.strokeStyle = 'rgba(20,30,40,.5)'; g.lineWidth = this.dpr || 1;
+    g.beginPath(); g.ellipse(q[0], q[1], .02 * k, .014 * k, 0, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore();
   }
   plate(c, axis, r, thick) {
     const g = this.g, k = this.k, d = this.dpr || 1, q = this.P(c), av = this.V(axis), facing = Math.abs(-axis[0] * Math.sin(this.yaw) + axis[2] * Math.cos(this.yaw)), al = Math.hypot(av[0], av[1]);

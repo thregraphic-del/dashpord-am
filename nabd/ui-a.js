@@ -20,7 +20,7 @@ const lvlDots = l => `<span class="lvl" title="${LVL[l]}">${[1,2,3].map(i => `<i
 const chipsM = (ids, cls) => ids.map(m => `<button class="mchip ${cls}" data-act="muscle" data-id="${m}">${esc(MUSCLES[m].ar)}</button>`).join('');
 
 const UI = {
-  st:{lib:{q:'', cat:'', lvl:'', eq:[], place:'', kind:'', mech:'', impact:'', tab:'all', sort:'fit', adv:false}, body:{sel:null, rec:false, rot:true}, quick:{focus:'legs', min:30, place:null, style:'circuit', picked:null}, pool:false, plansTab:'mine', edit:null, progEx:null, chat:[], confirm:null, detail:{fault:false, speed:1}, calMonth:null},
+  st:{lib:{q:'', cat:'', lvl:'', eq:[], place:'', kind:'', mech:'', impact:'', src:'', tab:'all', sort:'fit', adv:false}, body:{sel:null, rec:false, rot:true}, quick:{focus:'legs', min:30, place:null, style:'circuit', picked:null}, pool:false, plansTab:'mine', edit:null, progEx:null, chat:[], confirm:null, detail:{fault:false, speed:1}, calMonth:null},
   route() { const h = (location.hash || '').slice(1); if (h.startsWith('ex-')) return {v:'ex', id:h.slice(3)}; return {v:h || (S.profile ? 'home' : 'welcome')}; },
   render() {
     const r = this.route(), V = this.views[r.v] ? r.v : 'home';
@@ -155,6 +155,7 @@ UI.libResults = function () {
     if (f.place === 'home' && !available(e, HOME_EQ)) return false;
     if (f.place === 'gym' && e.eq.every(x => HOME_EQ.includes(x)) && !e.eq.includes('bb')) { /* gym can do all */ }
     if (f.kind && e.kind !== f.kind) return false;
+    if (f.src && e.src !== f.src) return false;
     if (f.mech === 'c' && (e.iso || e.kind !== 's')) return false;
     if (f.mech === 'i' && !e.iso) return false;
     if (f.impact === 'low' && e.hi) return false;
@@ -171,7 +172,7 @@ UI.libResults = function () {
 };
 UI.exCard = function (e) {
   const fav = S.favs.includes(e.id), lim = limited(e), dose = e.t ? e.t + ' ثانية' : `${e.sets} × ${esc(e.reps)}`;
-  return `<article class="excard"><a href="#ex-${e.id}" class="exlink"><canvas class="thumb" data-ex="${e.id}"></canvas><span class="excat">${CATS[exCat(e)]}</span><h3>${exName(e)}</h3>
+  return `<article class="excard"><a href="#ex-${e.id}" class="exlink"><canvas class="thumb" data-ex="${e.id}"></canvas><span class="excat">${CATS[exCat(e)]}${e.src ? ' · ' + SRC[e.src] : ''}</span><h3>${exName(e)}</h3>
   <p class="pdose">${dose}</p><p class="mus"><span class="mdot prim"></span>${esc(muscleNames(e.prim))}</p>
   <div class="meta">${lvlDots(e.lvl)}<span>${e.eq.map(q => EQ[q]).join(' / ')}</span>${e.hi ? '<span class="pill">عالي الصدمة</span>' : ''}${lim ? `<span class="pill warn">${lim}</span>` : ''}</div></a>
   <button class="fav ${fav ? 'on' : ''}" data-act="fav" data-id="${e.id}" aria-label="${fav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}">${ic('star')}</button></article>`;
@@ -192,7 +193,7 @@ UI.views.library = function () {
   </div>
   ${f.adv ? `<div class="card advf">
     <div class="field"><label>الأدوات المتاحة</label><div class="chips">${Object.entries(EQ).map(([k, t]) => `<button class="chip" aria-pressed="${f.eq.includes(k)}" data-act="lib-eq" data-v="${k}">${t}</button>`).join('')}</div></div>
-    <div class="filters">${sel('kind', [['','كل الأنواع'], ['s','قوة'], ['c','كارديو'], ['m','حركة ومرونة'], ['x','إطالة']])}${sel('mech', [['','مركب أو عزل'], ['c','مركب (عدة مفاصل)'], ['i','عزل (مفصل واحد)']])}${sel('impact', [['','كل الشدات'], ['low','منخفض الصدمة'], ['high','عالي الصدمة']])}
+    <div class="filters">${sel('kind', [['','كل الأنواع'], ['s','قوة'], ['c','كارديو'], ['m','حركة ومرونة'], ['x','إطالة']])}${sel('mech', [['','مركب أو عزل'], ['c','مركب (عدة مفاصل)'], ['i','عزل (مفصل واحد)']])}${sel('impact', [['','كل الشدات'], ['low','منخفض الصدمة'], ['high','عالي الصدمة']])}${sel('src', [['','كل المناهج التدريبية'], ...Object.entries(SRC)])}
     <label class="tog"><input type="checkbox" id="f-safe" data-in="libsafe" ${f.safe ? 'checked' : ''}> إخفاء ما قد يتعارض مع القيود في ملفي</label></div>
     <p class="note">فلتر القيود إرشادي فقط ولا يغني عن رأي طبيب أو أخصائي علاج طبيعي.</p></div>` : ''}
   <div id="lib-res">${this.libResults()}</div>`;
@@ -208,7 +209,7 @@ UI.views.ex = function (r) {
   const dose = e.t ? `${e.sets} × ${e.t} ثانية` : `${e.sets} × ${esc(e.reps)} عدّة`;
   return `<nav class="crumb"><a href="#library">التمارين</a> / <span>${CATS[exCat(e)]}</span></nav>
   <section class="exhead"><div><h1>${esc(e.ar)}</h1>${S.prefs.en ? `<p class="en big">${esc(e.en)}</p>` : ''}
-    <div class="meta">${lvlDots(e.lvl)}<span>${e.eq.map(q => EQ[q]).join(' / ')}</span><span>${KIND[e.kind]}</span><span>${e.kind === 's' ? (e.iso ? 'تمرين عزل' : 'تمرين مركب') : ''}</span>${e.hi ? '<span class="pill">عالي الصدمة</span>' : '<span class="pill soft">منخفض الصدمة</span>'}${lim ? `<span class="pill warn">${lim}</span>` : ''}</div></div>
+    <div class="meta">${e.src ? `<span class="pill src">${SRC[e.src]}</span>` : ''}${lvlDots(e.lvl)}<span>${e.eq.map(q => EQ[q]).join(' / ')}</span><span>${KIND[e.kind]}</span><span>${e.kind === 's' ? (e.iso ? 'تمرين عزل' : 'تمرين مركب') : ''}</span>${e.hi ? '<span class="pill">عالي الصدمة</span>' : '<span class="pill soft">منخفض الصدمة</span>'}${lim ? `<span class="pill warn">${lim}</span>` : ''}</div></div>
     <div class="exacts"><button class="btn ${fav ? 'on' : ''}" data-act="fav" data-id="${e.id}">${ic('star')} ${fav ? 'في المفضلة' : 'أضف للمفضلة'}</button><button class="btn" data-act="add-to-plan" data-id="${e.id}">${ic('plus')} أضف لخطة</button><button class="btn primary" data-act="try" data-id="${e.id}">${ic('play')} جرّبه الآن</button></div>
   </section>
   <div class="detail">
@@ -236,6 +237,7 @@ UI.views.ex = function (r) {
   </div>
   <section class="card"><h3>سلّم الصعوبة</h3><div class="alts">${altCard(alt.easier, 'أسهل')}<div class="altc cur"><span class="muted small">الحالي</span><b>${esc(e.ar)}</b>${lvlDots(e.lvl)}</div>${altCard(alt.harder, 'أصعب')}</div>
   ${alt.related.length ? `<h4>تمارين مشابهة</h4><div class="chips">${alt.related.map(x => `<a class="chip" href="#ex-${x.id}">${esc(x.ar)}</a>`).join('')}</div>` : ''}</section>
+  <section class="card video"><h3>شاهد التمرين بفيديو حقيقي</h3><p class="muted small">يفتح نتائج بحث يوتيوب باسم التمرين الإنجليزي، لتشاهد مدربين حقيقيين يؤدّونه.</p><a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e.en + ' exercise proper form')}" target="_blank" rel="noopener">▶ فيديوهات «${esc(e.en)}» على يوتيوب</a></section>
   <section class="card evidence"><h3>مصدر المعلومات ومستوى الدليل</h3>
   <ul class="bul"><li><b>عدد المجموعات والتكرارات:</b> مبنيّة على الإرشادات العامة (موقف ACSM 2009: للمبتدئين 1–3 مجموعات من 8–12 تكرارًا، ومرتين إلى ثلاث أسبوعيًا لكل مجموعة عضلية). <span class="pill soft">إرشاد علمي عام</span></li>
   <li><b>العضلات الأساسية والمساعدة:</b> من وظائف العضلات التشريحية المعروفة. <span class="pill soft">مرجع تشريحي</span></li>

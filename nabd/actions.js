@@ -24,7 +24,7 @@ const ACT = {
   'lib-cat'(b) { UI.st.lib.cat = b.dataset.v; UI.render(); },
   'lib-adv'() { UI.st.lib.adv = !UI.st.lib.adv; UI.render(); },
   'lib-eq'(b) { const a = UI.st.lib.eq, i = a.indexOf(b.dataset.v); i < 0 ? a.push(b.dataset.v) : a.splice(i, 1); UI.render(); },
-  'lib-reset'() { Object.assign(UI.st.lib, {q:'', cat:'', lvl:'', eq:[], place:'', kind:'', mech:'', impact:'', tab:'all', safe:false}); UI.render(); },
+  'lib-reset'() { Object.assign(UI.st.lib, {q:'', cat:'', lvl:'', eq:[], place:'', kind:'', mech:'', impact:'', src:'', tab:'all', safe:false}); UI.render(); },
   playpause() { Stage.playing = !Stage.playing; $('#pp').innerHTML = ic(Stage.playing ? 'pause' : 'play'); },
   replay() { Stage.t = 0; Stage.playing = true; const p = $('#pp'); if (p) p.innerHTML = ic('pause'); },
   speed(b) { Stage.speed = +b.dataset.v; UI.st.detail.speed = Stage.speed; $$('[data-act="speed"]').forEach(x => x.setAttribute('aria-pressed', x === b)); },
