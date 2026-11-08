@@ -1,0 +1,35 @@
+{
+ "total": 30.0,
+ "lines": [
+  {
+   "id": "F1",
+   "file": "F1.wav",
+   "start": 0.25,
+   "dur": 4.7
+  },
+  {
+   "id": "N1",
+   "file": "N1s.wav",
+   "start": 5.2,
+   "dur": 6.641
+  },
+  {
+   "id": "N2",
+   "file": "N2s.wav",
+   "start": 12.491,
+   "dur": 6.69
+  },
+  {
+   "id": "N3",
+   "file": "N3s.wav",
+   "start": 19.43,
+   "dur": 4.544
+  },
+  {
+   "id": "N4",
+   "file": "N4s.wav",
+   "start": 24.224,
+   "dur": 4.353
+  }
+ ]
+}
