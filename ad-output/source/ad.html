@@ -55,6 +55,7 @@ img.c{display:block;width:100%;height:auto}
 <div id="stage"><div class="bgdots"></div></div>
 <script src="node_modules/gsap/dist/gsap.min.js"></script>
 <script src="data.js"></script>
+<script src="puppet.js"></script>
 <script>
 const stage=document.getElementById('stage');
 const L={};TL.lines.forEach(l=>L[l.id]=l);
@@ -75,6 +76,33 @@ function chip(parent,text,t){const c=el('div','chip',parent,text);gsap.set(c,{xP
 function pop(t,targets,opt={}){tl.fromTo(targets,{scale:0,opacity:0},Object.assign({scale:1,opacity:1,duration:.45,ease:'back.out(2.2)',stagger:opt.stagger||0},opt.to||{}),t);
   const n=Array.isArray(targets)||targets instanceof NodeList?targets.length:1;for(let k=0;k<Math.min(n,6);k++)sfx(t+k*(opt.stagger||0),'pop',.7)}
 function float(e,t0,t1,amp=14,dur=1.2){tl.to(e,{y:'-='+amp,duration:dur,ease:'sine.inOut',yoyo:true,repeat:Math.max(1,Math.floor((t1-t0)/dur))},t0)}
+const PUPS=[];
+function pup(parent,x,y,w,css){const o=box(parent,x,y,w,null,'',null,css);const f=new Fahd(o,{seed:PUPS.length+1});Object.assign(f.s,Fahd.POSES.idle);PUPS.push(f);o.f=f;return o}
+const EXP={smile:{eye:1,happy:0,smile:.7,mouthO:0,round:0,brow:0,browAng:0,winkA:0,winkB:0,px:0,py:0},
+ laugh:{eye:1,happy:1,smile:1,mouthO:.7,round:0,brow:.3,browAng:0,winkA:0,winkB:0,px:0,py:0},
+ shock:{eye:1.35,happy:0,mouthO:.75,round:1,smile:-.2,brow:1,browAng:0,px:0,py:0},
+ frustrated:{eye:.7,happy:0,smile:-.6,brow:.2,browAng:.8,mouthO:0,round:0,px:0,py:0},
+ bored:{eye:.5,happy:0,smile:-.4,browAng:.5,brow:-.2,mouthO:0,px:0,py:.2},
+ yawn:{eye:.2,happy:0,smile:-.2,mouthO:1,round:.9,brow:.5},
+ think:{eye:1,happy:0,px:.6,py:-.7,smile:0,brow:.4,browAng:.3,mouthO:0},
+ proud:{eye:.85,happy:0,smile:1,brow:.5,browAng:0,mouthO:0,px:0,py:0},
+ wink:{eye:1,happy:0,winkA:1,smile:1,mouthO:.2,round:0,brow:.4,browAng:0,px:0,py:0},
+ blank:{eye:1.2,happy:0,px:0,py:0,smile:0,mouthO:0,brow:.6,browAng:0},
+ sarcastic:{eye:.7,happy:0,smile:.3,mouthO:0,brow:.5,browAng:.4,px:-.4,py:0},
+ panic:{eye:1.35,happy:0,mouthO:.5,round:.6,smile:-.6,brow:1,browAng:.6},
+ amazed:{eye:1.3,happy:0,mouthO:.45,round:.8,smile:.3,brow:1,browAng:0,px:0,py:.6},
+ curious:{eye:1.05,happy:0,px:.3,py:.6,smile:.3,brow:.5,browAng:0,mouthO:0},
+ confused:{eye:1.1,happy:0,px:-.5,py:-.3,smile:-.2,brow:.6,browAng:.6,mouthO:0}};
+const BASE={lean:0,head:0,headX:0,headY:0,shA:6,elA:-6,wrA:0,shB:6,elB:-6,wrB:0,legA:2,legB:2,liftA:0,liftB:0,bodyY:0,squash:0};
+function pose(o,t,name,exp,hands,dur=.35,ease='back.out(1.4)'){const f=o.f;const tgt=Object.assign({},name?BASE:{},name?Fahd.POSES[name]:{},exp?(typeof exp=='string'?EXP[exp]:exp):{});
+ tl.to(f.s,Object.assign({duration:dur,ease},tgt),t);
+ if(hands){const k=['hA','hB','pA','pB'];hands.forEach((v,i)=>{if(v!=null)tl.set(f,{[k[i]]:v},t+dur*.3)})}}
+function walk(o,t0,t1,fromX){const n=Math.max(1,Math.round((t1-t0)/.24));tl.fromTo(o,{x:fromX},{x:0,duration:t1-t0,ease:'power1.out'},t0);
+ tl.to(o.f.s,{liftA:34,duration:.24,yoyo:true,repeat:n-1,ease:'sine.inOut'},t0);tl.to(o.f.s,{liftB:34,duration:.24,yoyo:true,repeat:n-1,ease:'sine.inOut'},t0+.24);
+ tl.to(o.f.s,{shA:22,shB:-10,duration:.24,yoyo:true,repeat:n,ease:'sine.inOut'},t0);tl.to(o.f.s,{bodyY:-10,duration:.12,yoyo:true,repeat:n*2-1,ease:'sine.inOut'},t0)}
+function jump(o,t,n=3,h=70){tl.to(o.f.s,{bodyY:-h,squash:-.6,duration:.22,yoyo:true,repeat:n*2-1,ease:'power2.out'},t)}
+function wiggle(o,t,prop,amp,n,d=.18){tl.to(o.f.s,{[prop]:'+='+amp,duration:d,yoyo:true,repeat:n*2-1,ease:'sine.inOut'},t)}
+function mouthFlap(o,t,dur){const n=Math.round(dur/.14);tl.to(o.f.s,{mouthO:'+=.55',duration:.07,yoyo:true,repeat:n*2-1,ease:'sine.inOut'},t)}
 function swap(a,b,t){tl.to(a,{opacity:0,duration:.12},t);tl.fromTo(b,{opacity:0,scale:.9},{opacity:1,scale:1,duration:.3,ease:'back.out(2)'},t)}
 function shake(t){tl.to(stage,{x:'+=18',y:'-=10',duration:.04,yoyo:true,repeat:7,ease:'none'},t);tl.set(stage,{x:0,y:0},t+.34)}
 function phone(parent,x,y,w,h){const p=box(parent,x,y,w,h,'phone');const s=el('div','screen',p);const hd=el('div','apphead',s,'<b>3Goal</b><img src="img/logo.png">');return {p,s}}
@@ -103,8 +131,9 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
 /* ================= SCENE 1 ================= */
 {const s=scene(0),n1=L.n1.start,f1=L.f1.start;
  const glow=box(s,240,330,600,600,'blob',null,{background:'#D6ECEB'});
- const full=fahd(s,'front',372,330,336);
- tl.fromTo(full,{y:80,opacity:0},{y:0,opacity:1,duration:.6,ease:'back.out(1.6)'},.2);
+ const full=pup(s,340,320,400);
+ walk(full,.1,1.5,-700);pose(full,1.6,'wave','laugh',['open','open']);wiggle(full,1.9,'wrB',22,4,.16);
+ pose(full,3.4,'shrug','sarcastic');pose(full,4.4,'idle','smile');
  const books=[['ENGLISH','#105C6D',300],['GRAMMAR','#CBA55E',260],['DICTIONARY','#E65A6E',330],['VOCAB','#1E8C8F',240],['IELTS','#1B263A',220],['IDIOMS','#8a6fb5',250]];
  const bk=books.map((b,k)=>{const left=k%2?720:50,top=1410-Math.floor(k/2)*78;const e=box(s,left+(k%2?0:20),top,b[2],null,'book',b[0],{background:b[1]});tl.from(e,{y:-1300,rotation:(k%2?20:-20),duration:.55,ease:'bounce.out'},1.0+k*.28);sfx(1.25+k*.28,'thud',.5);return e});
  const notes=[['past perfect??',70,420,-8],['to be or not',800,520,7],['٣٠ كلمة يوميًا!',90,760,5],['phrasal verbs 😵',790,860,-6]];
@@ -114,9 +143,10 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  const yr=el('div','',cal,'2006',{font:'700 92px Inter',marginTop:'14px',color:'#1B263A'});
  pop(1.2,cal);count(yr,2006,2026,1.6,2.6);tl.to(cal,{rotation:6,duration:.1,yoyo:true,repeat:9},1.6);
  // f1: close-up + interview paper
- tl.to([full,glow,...bk,...nt,cal],{opacity:0,duration:.25},f1-.15);
- const shock=fahd(s,'e_shock',20,430,520,{opacity:0});
- tl.fromTo(shock,{opacity:0,x:-300},{opacity:1,x:0,duration:.4,ease:'back.out(1.6)'},f1);
+ tl.to([glow,...bk,...nt,cal],{opacity:0,duration:.25},f1-.15);
+ const shock=full;tl.to(full,{left:10,top:420,width:380,duration:.45,ease:'power2.inOut'},f1-.2);
+ pose(full,f1-.1,'shrug','frustrated');pose(full,f1+1.1,'facepalm','frustrated',['open','open']);pose(full,f1+2.3,'hipsHands','frustrated',['fist','fist']);
+ pose(full,f1+3.55,'shockHands','shock',['open','open'],.25);jump(full,f1+3.55,1,60);
  const paper=box(s,560,470,460,600,'card','',{padding:'34px',boxSizing:'border-box',borderRadius:'18px'});
  paper.innerHTML='<div style="font:700 40px Inter;color:#105C6D">JOB INTERVIEW</div><div style="height:6px;background:#CBA55E;width:120px;margin:14px 0 26px;border-radius:3px"></div>'+
   '<div style="font:500 28px Inter;line-height:2">Position: Manager<br>Language: <b style="color:#E65A6E">English only</b><br>Candidate: Fahd<br>Result: ________</div>'+
@@ -124,9 +154,7 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  tl.fromTo(paper,{x:600,rotation:15},{x:0,rotation:3,duration:.5,ease:'back.out(1.4)'},f1+.3);sfx(f1+.3,'whoosh',.6);
  const stamp=box(paper,40,300,null,null,'',' مرفوض<br><span style="font:700 40px Inter">REJECTED</span>',{border:'8px solid #D9534F',color:'#D9534F',font:'700 66px Plex',padding:'4px 34px 14px',borderRadius:'18px',textAlign:'center',transform:'rotate(-14deg)',lineHeight:'1.1',opacity:0,background:'#fff8'});
  const st=f1+3.4;tl.fromTo(stamp,{scale:3.2,opacity:0},{scale:1,opacity:1,duration:.22,ease:'power4.in'},st);sfx(st+.2,'stamp');shake(st+.2);
- const laugh=fahd(s,'e_laugh',20,430,520,{opacity:0});
- tl.to(shock,{opacity:0,duration:.1},f1+5.6);tl.fromTo(laugh,{opacity:0,rotation:-6},{opacity:1,rotation:3,duration:.3,ease:'back.out(2)'},f1+5.6);
- tl.to(laugh,{rotation:-3,y:-10,duration:.18,yoyo:true,repeat:7,ease:'sine.inOut'},f1+5.9);
+ pose(full,f1+5.3,'hug','laugh',['open','open']);wiggle(full,f1+5.5,'lean',-10,5,.16);wiggle(full,f1+5.5,'head',8,6,.13);
  // crumple
  const en=SC[0].end;tl.to(paper,{scale:.22,rotation:400,borderRadius:'50%',duration:.4,ease:'power2.in'},en-.75);tl.to(paper,{x:900,y:-500,duration:.35,ease:'power2.in'},en-.35);sfx(en-.7,'crumple',.6);
 }
@@ -134,13 +162,16 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
 /* ================= SCENE 2 ================= */
 {const s=scene(1),st=SC[1].start,f2=L.f2.start,n2=L.n2.start;
  chip(s,'من وين أبدأ؟',st+.15);
- const think=fahd(s,'e_think',290,360,500);
+ const think=pup(s,140,330,400);Object.assign(think.f.s,Fahd.POSES.holdBook,EXP.bored);think.f.pA='book';
  tl.from(think,{y:200,opacity:0,duration:.5,ease:'back.out(1.5)'},st+.1);
+ pose(think,f2+.2,null,'yawn',null,.4);pose(think,f2+1.2,null,'bored');tl.to(think.f.s,{lean:-6,head:-12,duration:.6,ease:'sine.inOut'},f2+1.2);
+ pose(think,f2+2.4,'shrug','frustrated',['open','open','none']);
  const book=box(s,250,880,580,300,'',`<svg viewBox="0 0 580 300" width="580"><path d="M290 40 Q160 0 20 30 V270 Q160 240 290 280Z" fill="#fff" stroke="#1B263A" stroke-width="8"/><path d="M290 40 Q420 0 560 30 V270 Q420 240 290 280Z" fill="#fff" stroke="#1B263A" stroke-width="8"/><g stroke="#c9c4ba" stroke-width="8" stroke-linecap="round"><path d="M60 80h180M60 120h190M60 160h170M60 200h185M330 80h180M330 120h170M330 160h190M330 200h160"/></g></svg>`);
- tl.from(book,{y:300,opacity:0,duration:.45,ease:'back.out(1.4)'},st+.4);
+ tl.set(book,{opacity:0},0);
  ['Z','z','Z'].forEach((z,k)=>{const e=box(s,720+k*60,420-k*90,null,null,'q',z,{fontSize:(110-k*20)+'px',opacity:0});tl.fromTo(e,{opacity:0,y:40},{opacity:1,y:-40,duration:1.4,repeat:1,ease:'sine.out'},f2+.3+k*.35);tl.to(e,{opacity:0,duration:.2},n2-.3)});
  // n2 phone
- tl.to(think,{left:-10,top:1040,width:300,duration:.5,ease:'power2.inOut'},n2-.2);tl.to(book,{y:700,opacity:0,duration:.4},n2-.3);
+ tl.to(think,{left:-40,top:880,width:260,duration:.5,ease:'power2.inOut'},n2-.2);pose(think,n2-.2,'holdPhone','curious',['open','fist',null,'phone']);
+ pose(think,n2+4,null,{elB:-115},null,.2);tl.to(book,{y:700,opacity:0,duration:.4},n2-.3);
  const {p,s:sc}=phone(s,330,300,640,1180);
  tl.from(p,{y:1700,duration:.6,ease:'back.out(1.2)'},n2-.2);sfx(n2-.2,'whoosh',.7);
  const paste=box(sc,26,140,552,120,'',`<div style="direction:rtl;font:400 28px Plex;color:#8a8f99;padding:14px 22px">الصق رابط يوتيوب، ملف، أو صورة…</div>`,{background:'#fff',border:'4px dashed #1E8C8F',borderRadius:'26px'});
@@ -159,16 +190,17 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
    const tag=el('div','lvl',w,w.dataset.l,{background:w.dataset.c});gsap.set(tag,{xPercent:-50});tl.fromTo(tag,{scale:0,opacity:0},{scale:1,opacity:1,duration:.35,ease:'back.out(3)'},t+.15);sfx(t+.15,'pop',.6)});
  const scale=box(sc,60,1080,null,null,'',`<div style="display:flex;gap:10px;font:700 24px Inter;color:#fff;direction:ltr">${[['A1','#4CAF7A'],['A2','#7BBF5A'],['B1','#CBA55E'],['B2','#E8833A'],['C1','#D9534F'],['C2','#a33']].map(x=>`<span style="background:${x[1]};padding:4px 18px;border-radius:999px">${x[0]}</span>`).join('')}</div>`);
  tl.from(scale,{y:120,opacity:0,duration:.4},n2+10.6);
- const shk=fahd(s,'e_shock',-10,1040,300,{opacity:0});swap(think,shk,n2+8.4);
+ pose(think,n2+8.4,'shockHands','amazed',['open','open',null,'none']);jump(think,n2+8.4,1,50);pose(think,n2+10,'thumbsUp','proud',['open','thumb']);
 }
 
 /* ================= SCENE 3 ================= */
 {const s=scene(2),st=SC[2].start,f3=L.f3.start,n3=L.n3.start;
  chip(s,'يتكلمون بسرعة!',st+.15);
- const oh=fahd(s,'e_oh',300,420,480);tl.from(oh,{scale:0,duration:.4,ease:'back.out(2)'},st+.1);
- tl.to(oh,{rotation:8,duration:.12,yoyo:true,repeat:13,ease:'sine.inOut'},f3);
+ const oh=pup(s,340,330,400);Object.assign(oh.f.s,EXP.confused);tl.from(oh,{scale:0,duration:.4,ease:'back.out(2)'},st+.1);
+ pose(oh,f3-.1,'holdHead','panic',['open','open']);wiggle(oh,f3,'lean',8,6,.14);wiggle(oh,f3,'px',1,8,.1);tl.to(oh,{rotation:6,duration:.14,yoyo:true,repeat:11,ease:'sine.inOut'},f3);
  ["gonna","wanna","Whaddaya","kinda","y'know","gotta","lemme","dunno"].forEach((w,k)=>{const e=box(s,0,330+(k%4)*230+(k>3?110:0),null,null,'speak',w,{left:'1100px',fontSize:(40+(k%3)*10)+'px'});tl.fromTo(e,{x:0},{x:-1700,duration:.75,ease:'none'},f3-.2+k*.27);if(k%2==0)sfx(f3-.2+k*.27,'zip',.4)});
- tl.to(oh,{left:-10,top:1060,width:290,duration:.5,ease:'power2.inOut'},n3-.25);
+ tl.to(oh,{left:-40,top:860,width:260,duration:.5,ease:'power2.inOut'},n3-.25);pose(oh,n3-.2,'holdPhone','curious',['open','fist',null,'phone']);
+ pose(oh,n3+1.6,null,'smile');
  const {p,s:sc}=phone(s,330,290,640,1200);tl.from(p,{y:1700,duration:.6,ease:'back.out(1.2)'},n3-.25);sfx(n3-.25,'whoosh',.7);
  const vid=box(sc,24,130,556,330,'',`<div style="position:absolute;inset:0;background:linear-gradient(135deg,#1B263A,#105C6D);border-radius:26px"></div><svg class="a" style="left:228px;top:90px" width="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff3"/><path d="M40 30 L72 50 L40 70Z" fill="#fff"/></svg><div class="a" style="left:0;right:0;bottom:22px;text-align:center;font:500 28px Inter;color:#fff">So, what are you <b style="color:#FFD15C">gonna</b> do?</div>`,{borderRadius:'26px',boxShadow:'0 14px 30px #0003',zIndex:5});
  const ctl=box(sc,24,490,556,null,'',null,{height:'420px'});
@@ -180,7 +212,7 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  tealOn(rp,n3+3.1);const x2=box(rp,108,-18,null,null,'pill','×2',{background:'#CBA55E',color:'#1B263A',font:'700 26px Inter',padding:'2px 10px'});pop(n3+3.2,x2);
  tealOn(mc,n3+4.9);
  const bub=box(s,10,860,null,null,'speak','"What are you gonna do?"',{fontSize:'34px',background:'#CBA55E',color:'#1B263A',opacity:0});tl.fromTo(bub,{opacity:0,scale:0},{opacity:1,scale:1,duration:.35,ease:'back.out(2)'},n3+6.0);tl.to(bub,{opacity:0,duration:.3},n3+7.8);
- const grin=fahd(s,'e_grin',-10,1060,290,{opacity:0});swap(oh,grin,n3+5.9);
+ pose(oh,n3+5.8,'pointUp','smile',['open','point',null,'none']);mouthFlap(oh,n3+6.0,1.6);pose(oh,n3+7.9,'thumbsUp','wink',['open','thumb']);
  // layout chips
  const lay=box(sc,24,930,556,90,'',null);const chipsT=['فوق','تحت','عائم'].map((t,k)=>box(lay,k*190,0,176,80,'pill',t,{background:'#fff',border:'3px solid #e8e3da',fontSize:'32px',direction:'rtl'}));
  tl.from(lay,{y:200,opacity:0,duration:.4},n3+7.4);
@@ -196,13 +228,15 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
 /* ================= SCENE 4 ================= */
 {const s=scene(3),st=SC[3].start,f4=L.f4.start,n4=L.n4.start;
  chip(s,'وين أحفظها؟',st+.15);
- const sh=fahd(s,'e_shock',300,430,480);tl.from(sh,{y:150,opacity:0,duration:.45,ease:'back.out(1.5)'},st+.1);
+ const sh=pup(s,340,330,400);Object.assign(sh.f.s,EXP.confused);tl.from(sh,{y:150,opacity:0,duration:.45,ease:'back.out(1.5)'},st+.1);
+ pose(sh,f4,'shrug','confused');pose(sh,f4+2.4,'reach','panic',['open','open'],.3);tl.to(sh,{x:-120,duration:.6,ease:'power2.out'},f4+2.5);jump(sh,f4+2.5,1,50);
+ pose(sh,f4+3.6,'shrug','frustrated');tl.to(sh,{x:0,duration:.4},f4+3.7);
  const words=['enormous','confident','gonna','progress','however','though','borrow','achieve'];
  words.forEach((w,k)=>{const e=box(s,60+(k%4)*250,350+Math.floor(k/4)*820+(k%2)*60,null,null,'note',w,{fontFamily:'Inter',fontSize:'30px',width:'200px',height:'150px',transform:`rotate(${(k%3-1)*8}deg)`});
    pop(st+.3+k*.08,e);tl.to(e,{x:-1400,y:-200+(k%3)*120,rotation:-200,duration:1.1,ease:'power2.in'},f4+2.6+k*.12)});
  for(let k=0;k<6;k++){const w=box(s,1100,420+k*190,240,8,'',null,{background:'#1E8C8F55',borderRadius:'4px'});tl.fromTo(w,{x:0},{x:-1500,duration:.6,ease:'none',repeat:2},f4+2.5+k*.1)}
  sfx(f4+2.6,'wind',.8);
- tl.to(sh,{left:-10,top:1060,width:290,duration:.5,ease:'power2.inOut'},n4-.3);
+ tl.to(sh,{left:-40,top:860,width:260,duration:.5,ease:'power2.inOut'},n4-.3);pose(sh,n4-.3,'holdPhone','curious',['open','fist',null,'phone']);
  const {p,s:sc}=phone(s,330,290,640,1200);tl.from(p,{y:1700,duration:.6,ease:'back.out(1.2)'},n4-.3);sfx(n4-.3,'whoosh',.7);
  // reader view
  const reader=box(sc,0,110,604,1054,'',null);
@@ -233,17 +267,17 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  const items=data.map((d,k)=>{const r=box(list,24,190+k*140,556,124,'',`<div class="a" style="left:24px;top:14px;font:700 38px Inter">${d[0]}</div><div class="a" style="left:24px;top:68px;font:500 22px Inter;color:#8a8f99">▶ ${d[5]} · <span style="font-family:Plex">${d[4]}</span></div><div class="a" style="right:24px;top:14px;direction:rtl;font:700 34px Plex;color:#6b7383">${d[1]}</div><div class="a" style="right:24px;top:70px;background:${d[3]};color:#fff;font:700 22px Inter;padding:2px 14px;border-radius:999px">${d[2]}</div>`,{background:'#fff',border:'3px solid #e8e3da',borderRadius:'24px'});tl.from(r,{x:600,opacity:0,duration:.35,ease:'back.out(1.3)'},n4+7.2+k*.12);return r});
  const order=(arr,t,ci)=>{tl.to(fch,{backgroundColor:'#fff',color:'#1B263A',duration:.1},t);tl.to(fch[ci],{backgroundColor:'#105C6D',color:'#fff',duration:.15},t);sfx(t,'click');arr.forEach((idx,pos)=>tl.to(items[idx],{top:190+pos*140,duration:.5,ease:'power2.inOut'},t+.1));sfx(t+.1,'shuffle',.5)};
  order([3,5,1,4,0,2],n4+10.7,0);order([0,1,2,3,4,5],n4+12.0,1);order([0,2,1,4,3,5],n4+13.6,2);
- const proud=fahd(s,'e_spark',-10,1060,290,{opacity:0});swap(sh,proud,n4+8.2);
+ pose(sh,n4+5.6,'cheer','laugh',['fist','fist',null,'none']);jump(sh,n4+5.6,1,40);pose(sh,n4+8.0,'armsCrossed','proud',['fist','fist']);wiggle(sh,n4+8.6,'head',5,4,.3);
 }
 
 /* ================= SCENE 5 ================= */
 {const s=scene(4),st=SC[4].start,f5=L.f5.start,n5=L.n5.start;
  chip(s,'أحفظ وأنسى!',st+.15);
- const th=fahd(s,'e_think',300,440,480);tl.from(th,{y:150,opacity:0,duration:.45,ease:'back.out(1.5)'},st+.1);
+ const th=pup(s,340,330,400);Object.assign(th.f.s,Fahd.POSES.think,EXP.think);th.f.hB='point';tl.from(th,{y:150,opacity:0,duration:.45,ease:'back.out(1.5)'},st+.1);
  const w=box(s,560,560,null,null,'pill','enormous',{background:'#D6ECEB',color:'#105C6D',font:'700 46px Inter',padding:'10px 30px',border:'4px solid #105C6D',opacity:0});
  tl.fromTo(w,{opacity:0,scale:.3,x:-60,y:80},{opacity:1,scale:1,x:0,y:0,duration:.4,ease:'back.out(2)'},f5+.2);
  tl.to(w,{y:-260,opacity:0,filter:'blur(14px)',scale:1.3,duration:1.4,ease:'power1.in'},f5+1.6);sfx(f5+1.6,'poof',.6);
- const ohh=fahd(s,'e_oh',300,440,480,{opacity:0});swap(th,ohh,f5+2.2);
+ const ohh=th;pose(th,f5+1.6,null,'blank');tl.to(th.f.s,{head:10,duration:.3},f5+1.6);pose(th,f5+2.3,'shrug','sarcastic',['open','open']);
  const qm=box(s,760,380,null,null,'q','?',{opacity:0});pop(f5+2.4,qm);
  tl.to([ohh,qm,th],{opacity:0,duration:.25},n5-.2);
  // game grid
@@ -256,9 +290,10 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  highlightTile(0,n5+4.5);highlightTile(1,n5+5.6);highlightTile(2,n5+6.8);highlightTile(3,n5+8.0);
  tl.to([title,...tiles],{opacity:0,scale:.8,duration:.3,stagger:.02},n5+9.2);
  // jumping fahd
- const ch=fahd(s,'p_cheer',-10,1150,250,{opacity:0});
+ const ch=pup(s,-50,880,250,{opacity:0});Object.assign(ch.f.s,Fahd.POSES.cheer,EXP.laugh);ch.f.hA='fist';ch.f.hB='fist';
+ wiggle(ch,n5+4,'shA',-40,10,.15);wiggle(ch,n5+4.15,'shB',-40,10,.15);
  tl.fromTo(ch,{opacity:0,y:200},{opacity:1,y:0,duration:.4,ease:'back.out(2)'},n5+3.6);
- tl.to(ch,{y:-50,duration:.3,yoyo:true,repeat:11,ease:'power1.out'},n5+4.0);
+ jump(ch,n5+4.0,6,60);
  [n5+5.4,n5+6.6,n5+7.8].forEach(t=>{confetti(s,t,130,1250,18);sfx(t,'ding',.8)});
  tl.to(ch,{opacity:0,duration:.3},n5+9.2);
  // review curve
@@ -284,9 +319,11 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
 /* ================= SCENE 6 ================= */
 {const s=scene(5),st=SC[5].start,f6=L.f6.start,n6=L.n6.start;
  chip(s,'وش أتفرج عليه؟',st+.15);
- const lap=fahd(s,'p_laptop',230,560,620);tl.from(lap,{y:200,opacity:0,duration:.45,ease:'back.out(1.5)'},st+.1);
+ const lap=pup(s,330,320,420);Object.assign(lap.f.s,Fahd.POSES.sitType,EXP.confused,{sit:1});lap.f.laptop=1;tl.from(lap,{y:200,opacity:0,duration:.45,ease:'back.out(1.5)'},st+.1);
+ wiggle(lap,st+.3,'elA',-15,6,.1);wiggle(lap,st+.4,'elB',-15,6,.1);tl.to(lap.f.s,{head:-14,duration:.4},f6);
+ pose(lap,n6-.2,null,'amazed');tl.to(lap.f.s,{head:0,duration:.3},n6);wiggle(lap,n6+.5,'elA',-15,12,.1);wiggle(lap,n6+.6,'elB',-15,12,.1);
  [[220,420],[780,470],[870,700]].forEach((p,k)=>{const q=box(s,p[0],p[1],null,null,'q','?',{opacity:0});pop(f6+.2+k*.25,q);float(q,f6+.6,n6,16,.6);tl.to(q,{opacity:0,duration:.2},n6-.2)});
- tl.to(lap,{left:20,top:1170,width:330,duration:.5,ease:'power2.inOut'},n6-.2);
+ tl.to(lap,{left:-40,top:780,width:330,duration:.5,ease:'power2.inOut'},n6-.2);pose(lap,n6+3,null,'laugh');
  const cats=['قصص','بودكاست','تحفيز','علوم','تقنية','رياضة','طبخ','سفر','تاريخ','أعمال','أفلام','صحة'];
  const badge=box(s,0,310,1080,null,'',`<div style="text-align:center;direction:rtl;font:700 60px Plex">قنوات في <span style="background:#CBA55E;padding:0 20px 6px;border-radius:18px;font-family:Inter">+20</span> مجال</div>`);pop(n6+.1,badge);
  const rowA=box(s,0,440,null,null,'',null,{display:'flex',gap:'20px',direction:'rtl',width:'2400px'}),rowB=box(s,0,560,null,null,'',null,{display:'flex',gap:'20px',direction:'rtl',width:'2400px'});
@@ -306,13 +343,14 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  // VS
  const lft=box(s,0,300,540,1220,'',null,{background:'#D6ECEB'}),rgt=box(s,540,300,540,1220,'',null,{background:'#F3E6C8'});
  tl.from(lft,{x:-560,duration:.4,ease:'power3.out'},n6+7.5);tl.from(rgt,{x:560,duration:.4,ease:'power3.out'},n6+7.5);sfx(n6+7.5,'whoosh',.8);
- const fv=fahd(s,'e_spark',40,520,460);tl.from(fv,{x:-500,duration:.45,ease:'back.out(1.5)'},n6+7.6);
+ const fv=pup(s,70,360,380);Object.assign(fv.f.s,Fahd.POSES.hipsHands,EXP.wink);fv.f.hA='fist';fv.f.hB='fist';tl.from(fv,{x:-500,duration:.45,ease:'back.out(1.5)'},n6+7.6);
+ pose(fv,n6+9.25,'cheer','laugh');jump(fv,n6+9.25,2,50);
  const fr=box(s,640,560,340,340,'',`<svg viewBox="0 0 200 200" width="340"><circle cx="100" cy="100" r="94" fill="#fff" stroke="#1B263A" stroke-width="8"/><circle cx="100" cy="80" r="34" fill="#CBA55E" stroke="#1B263A" stroke-width="7"/><path d="M40 168 Q100 100 160 168" fill="#CBA55E" stroke="#1B263A" stroke-width="7"/></svg><div style="text-align:center;direction:rtl;font:700 52px Plex;margin-top:10px">خويك</div>`);
  tl.from(fr,{x:500,duration:.45,ease:'back.out(1.5)'},n6+7.6);
  const vs=box(s,440,610,200,200,'pill','VS',{background:'#1B263A',color:'#CBA55E',font:'700 80px Inter',border:'8px solid #CBA55E',zIndex:5});pop(n6+7.9,vs);sfx(n6+7.9,'stamp',.6);
- const s1=box(s,40,1120,460,null,'','',{textAlign:'center',font:'700 120px Inter',color:'#105C6D'}),s2=box(s,580,1120,460,null,'','',{textAlign:'center',font:'700 120px Inter',color:'#a8853f'});
+ const s1=box(s,40,1330,460,null,'','',{textAlign:'center',font:'700 110px Inter',color:'#105C6D'}),s2=box(s,580,1330,460,null,'','',{textAlign:'center',font:'700 110px Inter',color:'#a8853f'});
  tl.from([s1,s2],{opacity:0,duration:.2},n6+8.0);count(s1,0,12,n6+8.0,1.3);count(s2,0,9,n6+8.0,1.3);
- const crown=box(s,190,430,160,null,'',`<svg viewBox="0 0 100 70" width="160"><path d="M5 65 L10 15 L30 40 L50 5 L70 40 L90 15 L95 65Z" fill="#CBA55E" stroke="#1B263A" stroke-width="5" stroke-linejoin="round"/></svg>`,{opacity:0});
+ const crown=box(s,180,250,160,null,'',`<svg viewBox="0 0 100 70" width="160"><path d="M5 65 L10 15 L30 40 L50 5 L70 40 L90 15 L95 65Z" fill="#CBA55E" stroke="#1B263A" stroke-width="5" stroke-linejoin="round"/></svg>`,{opacity:0});
  tl.fromTo(crown,{opacity:0,y:-200},{opacity:1,y:0,duration:.4,ease:'bounce.out'},n6+9.3);confetti(s,n6+9.3,270,700,26);sfx(n6+9.3,'win');
 }
 
@@ -325,10 +363,8 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  const wm=box(s,0,960,1080,null,'',`<div style="text-align:center;font:700 130px Inter;color:#105C6D">3Goal</div>`);tl.from(wm,{y:80,opacity:0,duration:.4},n7+.6);
  // f7: hug phone
  tl.to([logo,wm],{opacity:0,scale:.6,duration:.3},f7-.2);
- const hp=box(s,520,520,330,620,'phone',`<div class="screen" style="display:flex;align-items:center;justify-content:center"><img src="img/logo.png" style="width:200px"></div>`,{borderRadius:'50px',padding:'14px'});
- tl.fromTo(hp,{x:500,rotation:20},{x:0,rotation:-8,duration:.45,ease:'back.out(1.5)'},f7-.1);
- const lf=fahd(s,'e_laugh',60,480,560);tl.fromTo(lf,{x:-500},{x:0,duration:.45,ease:'back.out(1.5)'},f7-.1);
- tl.to(lf,{rotation:-4,duration:.2,yoyo:true,repeat:15,ease:'sine.inOut'},f7+.4);tl.to(hp,{rotation:-2,y:-12,duration:.25,yoyo:true,repeat:11,ease:'sine.inOut'},f7+.4);
+ const lf=pup(s,320,330,420);Object.assign(lf.f.s,Fahd.POSES.holdPhone,EXP.amazed);lf.f.hB='fist';lf.f.pB='phone';tl.fromTo(lf,{x:-800},{x:0,duration:.45,ease:'back.out(1.5)'},f7-.1);
+ pose(lf,f7+.5,'hug','laugh',['open','open']);wiggle(lf,f7+.7,'lean',8,6,.22);wiggle(lf,f7+.7,'head',-8,8,.16);const hp=box(s,0,0,1,1);
  for(let k=0;k<7;k++){const hh=box(s,180+k*110,1150,null,null,'heart',null,{opacity:0});tl.fromTo(hh,{opacity:0,y:0,scale:.5},{opacity:1,y:-700-(k%3)*80,scale:1,duration:2.4,ease:'power1.out'},f7+.3+k*.3);tl.to(hh,{opacity:0,duration:.4},f7+2.4+k*.3)}
  sparks(s,f7+.5,[[150,420,70],[880,450,60],[930,980,50],[110,1000,56]]);sfx(f7+.5,'sparkle',.6);
  // final
@@ -339,7 +375,8 @@ tl.to(b1,{x:120,y:-200,duration:TL.total,ease:'none'},0);tl.to(b2,{x:-160,y:260,
  [n8+1.1,n8+1.9,n8+2.7].forEach((t,k)=>pop(t,tags[k]));
  const cta=box(s,290,1150,500,130,'btn','جرّبه الحين ←',{background:'#CBA55E',color:'#1B263A',fontSize:'56px',borderRadius:'40px',border:'6px solid #1B263A',boxShadow:'0 12px 0 #1B263A'});
  pop(n8+3.5,cta);tl.to(cta,{scale:1.07,duration:.4,yoyo:true,repeat:5,ease:'sine.inOut'},n8+4.0);
- const peek=fahd(s,'e_wink',-20,1180,270,{opacity:0});tl.fromTo(peek,{opacity:1,x:-300,rotation:-20},{x:0,rotation:8,duration:.5,ease:'back.out(2)'},n8+3.8);
+ const peek=pup(s,800,1000,200,{opacity:0});Object.assign(peek.f.s,Fahd.POSES.wave,EXP.wink);tl.fromTo(peek,{opacity:1,x:300},{x:0,duration:.5,ease:'back.out(2)'},n8+3.4);
+ wiggle(peek,n8+3.9,'wrB',22,6,.16);
  sparks(s,n8+3.6,[[220,1120,50],[800,1110,56]]);
 }
 
@@ -365,7 +402,7 @@ TL.lines.forEach(l=>{const parts=TXT[l.id].split('|');const tot=parts.reduce((a,
 /* ---------- talk bounce ---------- */
 const FL=TL.lines.filter(l=>l.id[0]=='f');
 function talk(t){let v=0;for(const l of FL){if(t>=l.start&&t<l.start+l.dur){const a=ENV[l.id];v=a[Math.min(a.length-1,Math.floor((t-l.start)*30))]||0}}
- for(const tk of talkers)tk.style.transform=`translateY(${-v*14}px) scale(${1+v*.025},${1-v*.02}) rotate(${Math.sin(t*9)*v*2}deg)`}
+ for(const f of PUPS)f.render(t,v)}
 tl.set({}, {}, TL.total);
 window.seek=t=>{tl.seek(t,false);talk(t)};
 window.ready=Promise.all([document.fonts.ready,...[...document.images].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))]);
